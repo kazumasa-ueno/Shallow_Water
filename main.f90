@@ -15,9 +15,8 @@ program main
 	integer :: icnt, i, j
 	integer, parameter :: nx = int((xmax-xmin)/dx_deg)+1
 	integer, parameter :: ny = int((ymax-ymin)/dy_deg)+1
-	real(8) :: term1, term2, term3
 
-	! real(8) :: time, flop, elapsed_time
+	real(8) :: time, flop, elapsed_time
 
 	real(8) :: f(ny) !!colioli parameter [s^-1]
 	real(8) :: u(nx,ny,-1:1) !!zonal flow [m/s]
@@ -25,9 +24,13 @@ program main
 	real(8) :: h(nx,ny,-1:1) !! sea level deviations [m]
 	real(8) :: dx(ny), dy !! [m]
 
-	open(21, file = 'output.txt', form = 'formatted')
-	open(22, file = 'output_u.txt', form = 'formatted')
-	open(23, file = 'output_v.txt', form = 'formatted')
+	time = 0.d0
+  flop = 0.d0 
+  elapsed_time = 0.d0
+
+	! open(21, file = 'output.txt', form = 'formatted')
+	! open(22, file = 'output_u.txt', form = 'formatted')
+	! open(23, file = 'output_v.txt', form = 'formatted')
 
 	!initial condition
 	u(:,:,0) = 0.d0
@@ -40,9 +43,9 @@ program main
 		end do
 	end do
 	h(:,:,-1) = h(:,:,0)
-	write(21,*) h
-	write(22,*) u
-	write(23,*) v
+	! write(21,*) h
+	! write(22,*) u
+	! write(23,*) v
 	
 	!boundary condition
 	u(1,:,0) = 0.d0
@@ -57,6 +60,8 @@ program main
 	end do
 	dy = pi*earth_R*dy_deg/180
 
+	call start_timer()
+
 	!each step
 	do icnt = 1, nt
 		! write(*,*) 'nt = ', icnt
@@ -64,19 +69,24 @@ program main
 
 		call update(u,v,h)
 
-		if(mod(icnt,120) == 0 .and. icnt<=120*100) then !each 1 day
-			! write(21,*) icnt/1200*1 
-			write(*,*) 'day = ', icnt/120
-			write(21,*) h
-			write(22,*) u
-			write(23,*) v
-		else if(mod(icnt,6000) == 0) then !each 50days
-			write(*,*) 'day = ', icnt/120
-			write(21,*) h
-			write(22,*) u
-			write(23,*) v
-		end if
+		! if(mod(icnt,120) == 0 .and. icnt<=120*100) then !each 1 day
+		! 	! write(21,*) icnt/1200*1 
+		! 	write(*,*) 'day = ', icnt/120
+		! 	write(21,*) h
+		! 	write(22,*) u
+		! 	write(23,*) v
+		! else if(mod(icnt,6000) == 0) then !each 50days
+		! 	write(*,*) 'day = ', icnt/120
+		! 	write(21,*) h
+		! 	write(22,*) u
+		! 	write(23,*) v
+		! end if
 	end do
+
+	elapsed_time = get_elapsed_time();
+    
+  write(*, "(A7,F8.3,A6)"), "Time = ",elapsed_time," [sec]"
+  write(*, "(A13,F7.2,A9)"), "Performance= ",flop/elapsed_time*1.0e-09," [GFlops]"
 
 	stop
 end program main

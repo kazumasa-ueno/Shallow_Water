@@ -4,7 +4,7 @@ RM  = rm -f
 FFLAGS    = -O3 -mp 
 LDFLAGS   = 
 
-SRCS   = misc.f90 diffusion.f90 main.f90
+SRCS   = misc.f90 timestep.f90 main.f90
 TARGET = run
 DISTTARGET = $(TARGET)_1.0.0
 
