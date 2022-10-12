@@ -84,6 +84,8 @@ program main
 	end do
 
 	elapsed_time = get_elapsed_time();
+
+	write(*,*) "succeed"
     
   write(*, "(A7,F8.3,A6)"), "Time = ",elapsed_time," [sec]"
   write(*, "(A13,F7.2,A9)"), "Performance= ",flop/elapsed_time*1.0e-09," [GFlops]"
