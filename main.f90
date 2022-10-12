@@ -60,40 +60,10 @@ program main
 	!each step
 	do icnt = 1, nt
 		! write(*,*) 'nt = ', icnt
-		do j = 2, ny-1
-			do i = 2, nx-1
-				!calculating u
-				term1 = f(j) * (v(i-1,j,0)+v(i-1,j+1,0)+v(i,j,0)+v(i,j+1,0))/4 !!後で重み付き平均に変更
-				term2 = -g * (h(i,j,0)-h(i-1,j,0))/dx(j)
-				term3 = A * ((u(i+1,j,-1)-2*u(i,j,-1)+u(i-1,j,-1))/(dx(j))**2 + (u(i,j+1,-1)-2*u(i,j,-1)+u(i,j-1,-1))/(dy)**2)
-				u(i,j,1) = u(i,j,-1) + 2*dt*(term1+term2+term3)
-				! u(i,j,1) = u(i,j,-1) + 2*dt*(term2+term3)
+		call timestep(nx, ny, dx, dy, dt, g, A, Height, f, u, v, h)
 
-				!calculating v
-				term1 = -f(j) * (u(i,j-1,0)+u(i+1,j-1,0)+u(i,j,0)+u(i+1,j,0))/4 !!後で重み付き平均に変更
-				term2 = -g * (h(i,j,0)-h(i,j-1,0))/dy
-				term3 = A * ((v(i+1,j,-1)-2*v(i,j,-1)+v(i-1,j,-1))/(dx(j))**2 + (v(i,j+1,-1)-2*v(i,j,-1)+v(i,j-1,-1))/(dy)**2)
-				v(i,j,1) = v(i,j,-1) + 2*dt*(term1+term2+term3)
-				! v(i,j,1) = v(i,j,-1) + 2*dt*(term2+term3)
+		call update(u,v,h)
 
-				!calculating h
-				h(i,j,1) = h(i,j,-1) + 2*dt*(-Height*((u(i+1,j,0)-u(i,j,0))/dx(j) + (v(i,j+1,0)-v(i,j,0))/dy))
-			end do
-		end do
-		! u(1,:,1) = 0.d0
-		! u(2,:,1) = 0.d0
-		! u(nx,:,1) = 0.d0
-		! u(nx-1,:,1) = 0.d0
-		! v(:,1,1) = 0.d0
-		! v(:,2,1) = 0.d0
-		! v(:,ny,1) = 0.d0
-		! v(:,ny-1,1) = 0.d0
-		u(:,:,-1) = u(:,:,0)
-		u(:,:,0) = u(:,:,1)
-		v(:,:,-1) = v(:,:,0)
-		v(:,:,0) = v(:,:,1)
-		h(:,:,-1) = h(:,:,0)
-		h(:,:,0) = h(:,:,1)
 		if(mod(icnt,120) == 0 .and. icnt<=120*100) then !each 1 day
 			! write(21,*) icnt/1200*1 
 			write(*,*) 'day = ', icnt/120
