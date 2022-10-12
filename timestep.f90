@@ -3,7 +3,7 @@ module timestep
 	
 contains
 
-	subroutine timestep(nx, ny, dx, dy, dt, g, A, Height, f, u, v, h)
+	subroutine timesteps(nx, ny, dx, dy, dt, g, A, Height, f, u, v, h)
 
 		integer, intent(in) :: nx, ny
 		real(8), intent(in) :: dy, dt, g, A, Height
@@ -31,6 +31,6 @@ contains
 			end do
 		end do
 
-	end subroutine timestep
+	end subroutine timesteps
 
 end module timestep

@@ -65,7 +65,7 @@ program main
 	!each step
 	do icnt = 1, nt
 		! write(*,*) 'nt = ', icnt
-		call timestep(nx, ny, dx, dy, dt, g, A, Height, f, u, v, h)
+		call timesteps(nx, ny, dx, dy, dt, g, A, Height, f, u, v, h)
 
 		call update(u,v,h)
 
