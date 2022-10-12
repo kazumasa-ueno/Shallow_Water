@@ -89,8 +89,8 @@ program main
 
 	write(*,*) "succeed"
     
-  ! write(*, "(A7,F8.3,A6)"), "Time = ",elapsed_time," [sec]"
-  ! write(*, "(A13,F7.2,A9)"), "Performance= ",flop/elapsed_time*1.0e-09," [GFlops]"
+  write(*, "(A7,F8.3,A6)"), "Time = ",elapsed_time," [sec]"
+  write(*, "(A13,F7.2,A9)"), "Performance= ",flop/elapsed_time*1.0e-09," [GFlops]"
 
 	stop
 end program main
