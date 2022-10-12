@@ -7,12 +7,12 @@ contains
   subroutine update(u,v,h)
     real(8),intent(inout) :: u(:,:,:),v(:,:,:),h(:,:,:)
 
-    u(:,:,-1) = u(:,:,0)
-		u(:,:,0) = u(:,:,1)
-		v(:,:,-1) = v(:,:,0)
-		v(:,:,0) = v(:,:,1)
-		h(:,:,-1) = h(:,:,0)
-		h(:,:,0) = h(:,:,1)
+    u(:,:,1) = u(:,:,2)
+		u(:,:,2) = u(:,:,3)
+		v(:,:,1) = v(:,:,2)
+		v(:,:,2) = v(:,:,3)
+		h(:,:,1) = h(:,:,2)
+		h(:,:,2) = h(:,:,3)
   end subroutine update
 
   subroutine start_timer()

@@ -19,9 +19,9 @@ program main
 	real(8) :: time, flop, elapsed_time
 
 	real(8) :: f(ny) !!colioli parameter [s^-1]
-	real(8) :: u(nx,ny,-1:1) !!zonal flow [m/s]
-	real(8) :: v(nx,ny,-1:1) !!meridional flow [m/s]
-	real(8) :: h(nx,ny,-1:1) !! sea level deviations [m]
+	real(8) :: u(nx,ny,3) !!zonal flow [m/s]
+	real(8) :: v(nx,ny,3) !!meridional flow [m/s]
+	real(8) :: h(nx,ny,3) !! sea level deviations [m]
 	real(8) :: dx(ny), dy !! [m]
 
 	time = 0.d0
@@ -33,25 +33,25 @@ program main
 	! open(23, file = 'output_v.txt', form = 'formatted')
 
 	!initial condition
-	u(:,:,0) = 0.d0
-	u(:,:,-1) = 0.d0
-	v(:,:,0) = 0.d0
-	v(:,:,-1) = 0.d0
+	u(:,:,2) = 0.d0
+	u(:,:,1) = 0.d0
+	v(:,:,2) = 0.d0
+	v(:,:,1) = 0.d0
 	do j = 1, ny
 		do i = 1, nx
-			h(i,j,0) = 10*exp(-((i-nx/2)**2+(j-ny/2)**2)/2/16.d0**2) !!Gaussian
+			h(i,j,2) = 10*exp(-((i-nx/2)**2+(j-ny/2)**2)/2/16.d0**2) !!Gaussian
 		end do
 	end do
-	h(:,:,-1) = h(:,:,0)
+	h(:,:,1) = h(:,:,2)
 	! write(21,*) h
 	! write(22,*) u
 	! write(23,*) v
 	
 	!boundary condition
-	u(1,:,0) = 0.d0
-	v(:,1,0) = 0.d0
-	u(nx,:,0) = 0.d0
-	v(:,ny,0) = 0.d0
+	u(1,:,2) = 0.d0
+	v(:,1,2) = 0.d0
+	u(nx,:,2) = 0.d0
+	v(:,ny,2) = 0.d0
 
 	!calculating colioli parameter, dx and dy
 	do j=1, ny
