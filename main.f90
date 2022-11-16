@@ -60,7 +60,6 @@ program main
 	end do
 	dy = pi*earth_R*dy_deg/180
 
-!$acc data copy(u,v,h)
 	call start_timer()
 
 	!each step
@@ -85,7 +84,6 @@ program main
 	end do
 
 	elapsed_time = get_elapsed_time();
-!$acc end data
 
 	write(*,*) "succeed"
     

@@ -12,10 +12,7 @@ contains
 		real(8) :: term1, term2, term3
 		integer :: i, j
 
-!$acc kernels present(u,v,h)
-!$acc loop independent
 		do j = 2, ny-1
-!$acc loop independent
 			do i = 2, nx-1
 				!calculating u
 				term1 = f(j) * (v(i-1,j,2)+v(i-1,j+1,2)+v(i,j,2)+v(i,j+1,2))/4 !!後で重み付き平均に変更
@@ -33,7 +30,6 @@ contains
 				h(i,j,3) = h(i,j,1) + 2*dt*(-Height*((u(i+1,j,2)-u(i,j,2))/dx(j) + (v(i,j+1,2)-v(i,j,2))/dy))
 			end do
 		end do
-!$acc end kernels
 
 	end subroutine timesteps
 
