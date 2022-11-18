@@ -27,7 +27,7 @@ contains
 		d(:,0)    = d(:,1)
 		d(:,Ny+1) = d(:,Ny)
 
-	end subroutine boundary
+	end subroutine boundary_defect
 
 	subroutine boundary_u(u,Nx,Ny)
 		implicit none
@@ -51,4 +51,4 @@ contains
 		
 	end subroutine boundary_v
 
-end module boundary
+end module boundary_mod

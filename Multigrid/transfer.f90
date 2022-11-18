@@ -46,7 +46,7 @@ contains
 				dc(ic,jc) = (df(iff,jff) + df(iff,jff-1) + df(iff-1,jff) + df(iff-1,jff-1))/4.d0
 			end do
 		end do
-		boundary_defect(dc,Nx,Ny)
+		call boundary_defect(dc,Nx,Ny)
 
 	end subroutine Prolongation_defect
 

@@ -12,15 +12,16 @@ program main
 	real(8), parameter :: pi = 4*atan(1.d0)
 	real(8), parameter :: f0 = 4*pi/86400
 	real(8), parameter :: X = 1.d3, Y = 1.d3
+	real(8), parameter :: dt = 0.25d0
 
 	real(8) :: f(0:Ny+1) !corioli parameter
 	real(8) :: h(0:Nx+1,0:Ny+1)
 	real(8) :: u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1)
 	real(8) :: Au(0:Nx,1:Ny), Av(1:Nx,0:Ny), Az(1:Nx,1:Ny), b(1:Nx,1:Ny)
-	real(8) :: dt, dx, dy
+	real(8) :: dx, dy
 	integer :: nt, cyc
 
-	call initialize(u,v,z,gamma,h)
+	call initialize(u,v,z,gamma,h,Nx,Ny)
 	f = 0.d0
 	call calc_f(f,Ny,f0)
 	call when_l(l,X,Y,Nx,Ny,dx,dy)
@@ -31,10 +32,10 @@ program main
 		call calc_Az(Au,Av,Nx,Ny,Az)
 		call calc_b(u,v,z,gamma,h,f,dt,dx,dy,Nx,Ny,b)
 		do cyc = 1, 10
-			call MGCYC(k,z,Au,Av,Az,b,nu1,nu2,Nx,Ny,Nxc,Nyc)
+			call MGCYC(l,z,Au,Av,Az,b,nu1,nu2,Nx,Ny,Nx/2,Ny/2)
 		end do
-		call calc_u(u,v,z,f,gamma,dt,dx,g,Nx,Ny)
-		call calc_v(u,v,z,f,gamma,dt,dy,g,Nx,Ny)
+		call calc_u(u,v,z,f,gamma,dt,dx,dy,g,Nx,Ny)
+		call calc_v(u,v,z,f,gamma,dt,dx,dy,g,Nx,Ny)
 		! call calc_gamma()
 	end do
 
@@ -80,7 +81,7 @@ contains
 				df(i,j) = b(i,j) + Au(i-1,j)*z(i-1,j) + Au(i,j)*z(i+1,j) + Av(i,j-1)*z(i,j-1) + Av(i,j)*z(i,j+1) - Az(i,j)*z(i,j)
 			end do
 		end do
-		call boundary_defect(df)
+		call boundary_defect(df,Nx,Ny)
 
 		!Restrice the defect
 		dc(:,:) = 0.d0

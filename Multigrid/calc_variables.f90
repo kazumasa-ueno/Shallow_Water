@@ -11,14 +11,15 @@ contains
 		integer, intent(in) :: l
 		real(8), intent(in) :: X, Y
 
-		integer, intent(out) :: Nx, Ny
+		! integer, intent(in) :: Nx, Ny
+		integer, intent(in) :: Nx, Ny
 		real(8), intent(out) :: dx, dy
 
 		integer :: n
 
 		n = 2**l
-		Nx = n
-		Ny = n
+		! Nx = n
+		! Ny = n
 		dx = X/Nx
 		dy = Y/Ny
 	
@@ -36,11 +37,11 @@ contains
 		
 	end subroutine calc_f
 
-	subroutine calc_u(u,v,z,f,gamma,dt,dx,g,Nx,Ny)
+	subroutine calc_u(u,v,z,f,gamma,dt,dx,dy,g,Nx,Ny)
 		implicit none
 		
 		integer, intent(in) :: Nx, Ny
-		real(8), intent(in) :: v(0:Nx+1,-1:Ny+1), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), f(0:Ny+1), dt, dx, g
+		real(8), intent(in) :: v(0:Nx+1,-1:Ny+1), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), f(0:Ny+1), dt, dx, dy, g
 		real(8), intent(inout) :: u(-1:Nx+1,0:Ny+1)
 
 		integer :: i, j
@@ -59,11 +60,11 @@ contains
 
 	end subroutine calc_u
 
-	subroutine calc_v(u,v,z,f,gamma,dt,dy,g,Nx,Ny)
+	subroutine calc_v(u,v,z,f,gamma,dt,dx,dy,g,Nx,Ny)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
-		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), f(0:Ny+1), dt, dx, g
+		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), f(0:Ny+1), dt, dx, dy, g
 		real(8), intent(inout) :: v(0:Nx+1,-1:Ny+1)
 
 		integer :: i, j
@@ -85,7 +86,7 @@ contains
 	subroutine calc_gamma()
 		implicit none
 		
-	end subroutine dalc_gamma
+	end subroutine calc_gamma
 
 	subroutine calc_Au(z,gamma,h,g,dt,dx,Nx,Ny,Au)
 		implicit none
@@ -142,7 +143,7 @@ contains
 		implicit none
 		
 		integer, intent(in) :: Nx, Ny
-		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1), z(0:Nx+1,0:Ny+1), h(0:Nx+1,0:Ny+1), f(0:Ny+1)
+		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1), z(0:Nx+1,0:Ny+1), h(0:Nx+1,0:Ny+1), f(0:Ny+1), gamma(0:Nx+1,0:Ny+1)
 		real(8), intent(in) :: dt, dx, dy
 		real(8), intent(out) :: b(1:Nx,1:Ny)
 
@@ -151,35 +152,40 @@ contains
 
 		do j = 1, Ny
 			do i = 1, Nx
-				Fu(1) = calcFu(i,j,u,v,dt,dx,dy,Nx,Ny)
-				Fu(2) = calcFu(i-1,j,u,v,dt,dx,dy,Nx,Ny)
-				Fu(3) = calcFu(i,j-1,u,v,dt,dx,dy,Nx,Ny)
+				Fu(1) = calc_Fu(i,j,u,v,dt,dx,dy,Nx,Ny)
+				Fu(2) = calc_Fu(i-1,j,u,v,dt,dx,dy,Nx,Ny)
+				Fu(3) = calc_Fu(i,j-1,u,v,dt,dx,dy,Nx,Ny)
 				Fv(1) = calc_Fv(i,j,u,v,dt,dx,dy,Nx,Ny)
 				Fv(2) = calc_Fv(i-1,j,u,v,dt,dx,dy,Nx,Ny)
 				Fv(3) = calc_Fv(i,j-1,u,v,dt,dx,dy,Nx,Ny)
 				b(i,j) = z(i,j) - (dt/dx) * ( &
-				& (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) * (Fu(1)-z_frac(f(j:j+1))*dt*Fv(1)) &
-				& - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) * (Fu(2)-z_frac(f(j:j+1))*dt*Fv(2)) ) &
+				& (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
+				& * (Fu(1)-z_frac(f(j:j+1))*dt*Fv(1)) &
+				& - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
+				& * (Fu(2)-z_frac(f(j:j+1))*dt*Fv(2)) ) &
 				& - (dt/dy) * ( &
-				& (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) * (Fv(1)+f(j)*dt*Fu(1)) &
-				& - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) * (Fv(3)+f(j-1)*dt*Fu(3)) )
+				& (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
+				& * (Fv(1)+f(j)*dt*Fu(1)) &
+				& - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
+				& * (Fv(3)+f(j-1)*dt*Fu(3)) )
 			end do
 		end do
 
 	end subroutine calc_b
 
 	! calculate Fu(i+1/2,j)
-	function calc_Fu(i,j,u,v,dt,dx,dy,Nx,Ny)
+	real(8) function calc_Fu(i,j,u,v,dt,dx,dy,Nx,Ny)
 		implicit none
 		
 		integer, intent(in) :: Nx, Ny, i, j
 		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:nx+1,-1:Ny+1), dt, dx, dy
 
 		integer, parameter :: smax = 100
-		real(8), parameter :: tau = dt / smax
+		real(8) :: tau
 		integer :: s
 		real(8) :: x, y, u_s, v_s
 
+		tau = dt / smax
 		x = i*dx
 		y = j*dy
 		u_s = u(i,j)
@@ -194,17 +200,18 @@ contains
 	end function calc_Fu
 
 	! calculate Fv(i,j+1/2)
-	function calc_Fv(i,j,u,v,dt,dx,dy,Nx,Ny)
+	real(8) function calc_Fv(i,j,u,v,dt,dx,dy,Nx,Ny)
 		implicit none
 		
 		integer, intent(in) :: Nx, Ny, i, j
 		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:nx+1,-1:Ny+1), dt, dx, dy
 
 		integer, parameter :: smax = 100
-		real(8), parameter :: tau = dt / smax
+		real(8) :: tau
 		integer :: s
 		real(8) :: x, y, u_s, v_s
 
+		tau = dt / smax
 		x = i*dx
 		y = j*dy
 		u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
@@ -225,7 +232,7 @@ contains
 		real(8), intent(in) :: x, y, u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1)
 		real(8), intent(out) :: u_s, v_s
 		integer :: iu, ju, iv, jv
-		real(8) :: pu, qu, xv, yv, pv, jv
+		real(8) :: pu, qu, xv, yv, pv, qv
 
 		iu = int(x)
 		ju = int(y)
@@ -249,7 +256,7 @@ contains
 		real(8), intent(in) :: x, y, u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1)
 		real(8), intent(out) :: u_s, v_s
 		integer :: iu, ju, iv, jv
-		real(8) :: pu, qu, xu, yu, pv, jv
+		real(8) :: pu, qu, xu, yu, pv, qv
 
 		xu = x - 0.5d0
 		yu = y + 0.5d0
@@ -267,7 +274,7 @@ contains
 	end subroutine inner_v
 
 	!calculate the value when z's index is fractional
-	function z_frac(z)
+	real(8) function z_frac(z)
 		implicit none
 
 		real(8), intent(in) :: z(2)
