@@ -4,14 +4,14 @@ program main
 	use transfer_mod
 	implicit none
 	
-	integer, parameter :: l = 8
+	integer, parameter :: l = 6
 	integer, parameter :: Nx = 2**l, Ny = 2**l
 	integer, parameter :: ntmax = 100
 	integer, parameter :: nu1 = 1, nu2 = 1
 	real(8), parameter :: g = 9.81d0 !gravity acceleration
 	real(8), parameter :: pi = 4*atan(1.d0)
 	real(8), parameter :: f0 = 4*pi/86400
-	real(8), parameter :: X = 1.d3, Y = 1.d3
+	real(8), parameter :: X = 6.d3, Y = 6.d3
 	real(8), parameter :: dt = 0.25d0
 
 	real(8) :: f(0:Ny+1) !corioli parameter
@@ -22,7 +22,7 @@ program main
 	integer :: nt, cyc
 
 	call initialize(u,v,z,gamma,h,Nx,Ny)
-	f = 0.d0
+	f(:,:) = 0.d0
 	call calc_f(f,Ny,f0)
 	call when_l(l,X,Y,Nx,Ny,dx,dy)
 
@@ -31,8 +31,10 @@ program main
 		call calc_Av(z,gamma,h,g,dt,dy,Nx,Ny,Av)
 		call calc_Az(Au,Av,Nx,Ny,Az)
 		call calc_b(u,v,z,gamma,h,f,dt,dx,dy,Nx,Ny,b)
+		write(*,*) 'nt = ', nt
 		do cyc = 1, 10
 			call MGCYC(l,z,Au,Av,Az,b,nu1,nu2,Nx,Ny,Nx/2,Ny/2)
+			! call smooth(z,Au,Av,Az,b,Nx,Ny)
 		end do
 		call calc_u(u,v,z,f,gamma,dt,dx,dy,g,Nx,Ny)
 		call calc_v(u,v,z,f,gamma,dt,dx,dy,g,Nx,Ny)
@@ -50,7 +52,7 @@ contains
 
 		u(:,:) = 0.d0
 		v(:,:) = 0.d0
-		h(:,:) = 1.d3
+		h(:,:) = 1.d0
 		z(:,:) = 0.d0
 		gamma(:,:) = 0.d0 !!!てきとう
 		

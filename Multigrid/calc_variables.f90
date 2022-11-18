@@ -49,11 +49,11 @@ contains
 
 		u_b(:,:) = u(:,:)
 
-		do j = 0, Ny+1
-			do i = 0, Nx
+		do j = 1, Ny
+			do i = 1, Nx
 				Fu = calc_Fu(i,j,u_b,v,dt,dx,dy,Nx,Ny)
 				Fv = calc_Fv(i,j,u_b,v,dt,dx,dy,Nx,Ny)
-				u(i,j) = (Fu - g*(dt/dx)*(z(i+1,j)-z(i,j)) - z_frac(f(j:j+1))*dt*Fv) / (1+z_frac(gamma(i:i+1,j))*dt)
+				u(i,j) = (Fu - g*(dt/dx)*(z(i+1,j)-z(i,j)) - f(j)*dt*Fv) / (1+z_frac(gamma(i:i+1,j))*dt)
 			end do
 		end do
 		call boundary_u(u,Nx,Ny)
@@ -68,7 +68,7 @@ contains
 		real(8), intent(inout) :: v(0:Nx+1,-1:Ny+1)
 
 		integer :: i, j
-		real(8) :: Fu, Fv, v_b(0:Nx+1,-1:Ny+1) !u before update
+		real(8) :: Fu, Fv, v_b(0:Nx+1,-1:Ny+1) !v before update
 
 		v_b(:,:) = v(:,:)
 
@@ -193,7 +193,7 @@ contains
 		do s = 1, smax
 			x = x - tau*u_s
 			y = y - tau*v_s
-			call inner_u(x,y,u_s,v_s,u,v,Nx,Ny)
+			call inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
 		end do
 		calc_Fu = u_s
 
@@ -219,28 +219,28 @@ contains
 		do s = 1, smax
 			x = x - tau*u_s
 			y = y - tau*v_s
-			call inner_v(x,y,u_s,v_s,u,v,Nx,Ny)
+			call inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
 		end do
 		calc_Fv = v_s
 
 	end function calc_Fv
 
-	subroutine inner_u(x,y,u_s,v_s,u,v,Nx,Ny)
+	subroutine inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
-		real(8), intent(in) :: x, y, u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1)
+		real(8), intent(in) :: x, y, u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1), dx, dy
 		real(8), intent(out) :: u_s, v_s
 		integer :: iu, ju, iv, jv
 		real(8) :: pu, qu, xv, yv, pv, qv
 
-		iu = int(x)
-		ju = int(y)
-		pu = x - iu
-		qu = y - ju
+		iu = int(x/dx)
+		ju = int(y/dy)
+		pu = x/dx - iu
+		qu = y/dy - ju
 		u_s = (1-pu)*((1-qu)*u(iu,ju)+qu*u(iu,ju+1)) + pu*((1-qu)*u(iu+1,ju)+qu*u(iu+1,ju+1))
-		xv = x + 0.5d0
-		yv = y - 0.5d0
+		xv = x/dx + 0.5d0
+		yv = y/dy - 0.5d0
 		iv = int(xv)
 		jv = int(yv)
 		pv = xv - iv
@@ -249,26 +249,26 @@ contains
 
 	end subroutine inner_u
 
-	subroutine inner_v(x,y,u_s,v_s,u,v,Nx,Ny)
+	subroutine inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
-		real(8), intent(in) :: x, y, u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1)
+		real(8), intent(in) :: x, y, u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1), dx, dy
 		real(8), intent(out) :: u_s, v_s
 		integer :: iu, ju, iv, jv
 		real(8) :: pu, qu, xu, yu, pv, qv
 
-		xu = x - 0.5d0
-		yu = y + 0.5d0
+		xu = x/dx - 0.5d0
+		yu = y/dy + 0.5d0
 		iu = int(xu)
 		ju = int(yu)
 		pu = xu - iu
 		qu = yu - ju
 		u_s = (1-pu)*((1-qu)*u(iu,ju)+qu*u(iu,ju+1)) + pu*((1-qu)*u(iu+1,ju)+qu*u(iu+1,ju+1))
-		iv = int(x)
-		jv = int(y)
-		pv = x - iv
-		qv = y - jv
+		iv = int(x/dx)
+		jv = int(y/dy)
+		pv = x/dx - iv
+		qv = y/dy - jv
 		v_s = (1-pv)*((1-qv)*v(iv,jv)+qv*v(iv,jv+1)) + pv*((1-qv)*v(iv+1,jv)+qv*v(iv+1,jv+1))
 
 	end subroutine inner_v
