@@ -15,9 +15,9 @@ contains
 		integer, intent(in) :: Nx, Ny
 		real(8), intent(out) :: dx, dy
 
-		integer :: n
+		! integer :: n
 
-		n = 2**l
+		! n = 2**l
 		! Nx = n
 		! Ny = n
 		dx = X/Nx
@@ -83,8 +83,20 @@ contains
 		
 	end subroutine calc_v
 
-	subroutine calc_gamma()
+	subroutine calc_gamma(u,v,z,h,gamma,g,Cz,Nx,Ny)
 		implicit none
+
+		integer, intent(in) :: Nx, Ny
+		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:Nx+1,-1:Ny+1), z(0:Nx+1,0:Ny+1), h(0:Nx+1,0:Ny+1), g, Cz
+		real(8), intent(out) :: gamma(0:Nx+1,0:Ny+1)
+
+		integer :: i, j
+
+		do j = 0, Ny+1
+			do i = 0, Nx+1
+				gamma(i,j) = g*(z_frac(u(i-1:i,j))**2+z_frac(v(i,j-1:j))**2)**0.5d0 / Cz**2 / (z(i,j)+h(i,j))
+			end do
+		end do
 		
 	end subroutine calc_gamma
 
@@ -180,7 +192,7 @@ contains
 		integer, intent(in) :: Nx, Ny, i, j
 		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:nx+1,-1:Ny+1), dt, dx, dy
 
-		integer, parameter :: smax = 100
+		integer, parameter :: smax = 12
 		real(8) :: tau
 		integer :: s
 		real(8) :: x, y, u_s, v_s
@@ -206,7 +218,7 @@ contains
 		integer, intent(in) :: Nx, Ny, i, j
 		real(8), intent(in) :: u(-1:Nx+1,0:Ny+1), v(0:nx+1,-1:Ny+1), dt, dx, dy
 
-		integer, parameter :: smax = 100
+		integer, parameter :: smax = 12
 		real(8) :: tau
 		integer :: s
 		real(8) :: x, y, u_s, v_s

@@ -3,16 +3,17 @@ module boundary_mod
 	
 contains
 
-	subroutine boundary(z,Nx,Ny)
+	subroutine boundary(z,Nx,Ny,time)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
+		real(8), intent(in) :: time
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 
 		z(0,:)    = z(1,:)
 		z(Nx+1,:) = z(Nx,:)
 		z(:,0)    = z(:,1)
-		z(:,Ny+1) = z(:,Ny+1)
+		z(:,Ny+1) = z(:,Ny)
 		
 	end subroutine boundary
 
