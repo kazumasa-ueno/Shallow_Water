@@ -34,8 +34,8 @@ contains
 		implicit none
 
 		integer, intent(in) :: Nx, Ny !course grid number
-		real(8), intent(in) :: df(0:2*Nx+1,0:2*Ny+1)
-		real(8), intent(out) :: dc(0:Nx+1,0:Ny+1)
+		real(8), intent(in) :: df(1:2*Nx,1:2*Ny)
+		real(8), intent(out) :: dc(1:Nx,1:Ny)
 
 		integer :: ic, jc, iff, jff
 
@@ -46,7 +46,6 @@ contains
 				dc(ic,jc) = (df(iff,jff) + df(iff,jff-1) + df(iff-1,jff) + df(iff-1,jff-1))/4.d0
 			end do
 		end do
-		call boundary_defect(dc,Nx,Ny)
 
 	end subroutine Prolongation_defect
 
