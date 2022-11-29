@@ -156,6 +156,7 @@ contains
 		do j = 1, Ny
 			do i = 1, Nx
 				Az(i,j) = 1 + Au(i,j) + Au(i-1,j) + Av(i,j) + Av(i,j-1)
+				! write(*,*) Az(i,j)
 			end do
 		end do
 

@@ -4,9 +4,9 @@ program main
 	use transfer_mod
 	implicit none
 	
-	integer, parameter :: l = 2
+	integer, parameter :: l = 5
 	! integer, parameter :: Nx = 2**l, Ny = 2**(l-1)
-	integer, parameter :: Nx = 120, Ny = 60
+	integer, parameter :: Nx = 160*4, Ny = 80*4
 	integer, parameter :: ntmax = 100
 	integer, parameter :: nu1 = 1, nu2 = 1
 	real(8), parameter :: g = 9.81d0 !gravity acceleration
@@ -50,19 +50,19 @@ program main
 		call calc_Av(z,gamma,h,g,dt,dy,Nx,Ny,Av)
 		call calc_Az(Au,Av,Nx,Ny,Az)
 		call calc_b(u,v,z,gamma,h,f,dt,dx,dy,dtau,Nx,Ny,b)
-		write(*,*) 'times = ', times
 		do cyc = 1, 100
-			! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-			! write(*,*) 'cyc = ', cyc, Res
-
 			Prev(:,:) = z(:,:)
-			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
+			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
+			write(*,*) 'cyc = ', cyc, Res
+
+			! call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
 			tmp(:) = reshape(Prev(:,:) - z(:,:),(/(Nx+2)*(Ny+2)/))
 			write(*,*) 'cyc = ', cyc, dot_product(tmp,tmp)
 			! if(times==100) then
 			! 	write(12,*) z(1:Nx,1:Ny)
 			! end if
 		end do
+		write(*,*) 'times = ', times
 		u_b(:,:) = u(:,:)
 		v_b(:,:) = v(:,:)
 		call calc_u(u,v_b,z,f,gamma,dt,dx,dy,dtau,g,Nx,Ny)
@@ -152,9 +152,18 @@ contains
 		call Prolongation(Au,Av,Az,Auc,Avc,Azc,Nxc,Nyc)
 		call Prolongation_defect(df,dc,Nxc,Nyc)
 		call calc_channel(Nyc,Y,jminc,jmaxc)
-		! call channel_z_defect(dc,Nxc,Nyc,jminc,jmaxc)
-		! if(k==2) then
-		! 	write(20,*) dc(1:Nxc,1:Nyc)
+
+		! if(k==1) then
+			! write(20,*) Azc(1:Nxc,1:Nyc)
+			! write(*,*) Auc(0:1,10), Avc(1,9:10), Azc(1,10), dc(1,10)
+			! write(*,*) Azc(:,:)
+			! do j = 1, Nyc
+			! 	do i = 1, Nxc
+			! 		write(*,*) i, j, (Auc(i,j)+Avc(i,j))/(Azc(i,j)-Auc(i-1,j)-Avc(i,j-1)) 
+					! write(*,*) Auc(i-1:i,j), Avc(i,j-1:j), Azc(i,j)
+					! write(*,*) Azc(i,j)
+		! 		end do
+		! 	end do
 		! end if
 
 		!Compute an approximate solution v of the defect equation on k-1
@@ -162,8 +171,11 @@ contains
 		if(k==1) then
 			do nt = 1, 100
 				call smooth(wc,Auc,Avc,Azc,dc,Nxc,Nyc,jminc,jmaxc)
-				call boundary_defect(z,Nx,Ny)
-				write(20,*) wc(1:Nxc,1:Nyc)
+				! call boundary_defect(wc,Nxc,Nyc)
+				! write(*,*) jminc,jmaxc
+				! write(*,*) wc(1,9:11)
+				! write(*,*) Auc(0:1,10), Avc(1,9:10), Azc(1,10), dc(1,10)
+				! write(20,*) wc(0:Nxc+1,0:Nyc+1)
 			end do
 		else
 			call MGCYC(l,k-1,wc,Auc,Avc,Azc,dc,nu1,nu2,Y,Nxc,Nyc,Nxc/2,Nyc/2,Res)
@@ -180,6 +192,11 @@ contains
 		do nt = 1, nu2
 			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
 			call boundary_defect(z,Nx,Ny)
+			! if(k==l) then
+			! 	call boundary(z,Nx,Ny,jmin,jmax)
+			! else
+			! 	call boundary_defect(z,Nx,Ny)
+			! end if
 		end do
 
 		Res = 0.d0
@@ -189,6 +206,8 @@ contains
 			end do
 		end do
 		Res = Res**0.5d0
+
+		! write(*,*) "^_^"
 
 	end subroutine MGCYC
 
@@ -210,7 +229,7 @@ contains
 				z(i,j) = (b(i,j)+Au(i-1,j)*z(i-1,j)+Au(i,j)*z(i+1,j)+Av(i,j-1)*z(i,j-1)+Av(i,j)*z(i,j+1))/Az(i,j)
 			end do
 		end do
-		call boundary(z,Nx,Ny,jmin,jmax)
+		! call boundary(z,Nx,Ny,jmin,jmax)
 
 	end subroutine smooth
 

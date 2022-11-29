@@ -1,5 +1,6 @@
 module transfer_mod
 	use boundary_mod
+	use calc_variables_mod
 	implicit none
 	
 contains
@@ -20,13 +21,20 @@ contains
 				jff = 2*jc
 				Auc(ic,jc) = (Auf(iff,jff) + Auf(iff,jff-1))/2.d0
 				Avc(ic,jc) = (Avf(iff,jff) + Avf(iff-1,jff))/2.d0
-				Azc(ic,jc) = (Azf(iff,jff) + Azf(iff-1,jff) + Azf(iff,jff-1) + Azf(iff-1,jff-1))/4.d0
+				! Azc(ic,jc) = (Azf(iff,jff) + Azf(iff-1,jff) + Azf(iff,jff-1) + Azf(iff-1,jff-1))/4.d0
 			end do
 			Auc(0,jc) = (Auf(0,jff) + Auf(0,jff-1))/2.d0
 		end do
 		do ic = 1, Nx
 			Avc(ic,0) = (Avf(iff,0) + Avf(iff-1,0))/2.d0
 		end do
+		call calc_Az(Auc,Avc,Nx,Ny,Azc)
+		! do jc = 1, Ny
+		! 	do ic = 1, Nx
+				! Azc(ic,jc) = 1 + Auc(ic-1,jc) + Auc(ic,jc) + Avc(ic,jc-1) + Avc(ic,jc)
+				! write(*,*) Azc(ic,jc)
+		! 	end do
+		! end do
 
 	end subroutine Prolongation
 
