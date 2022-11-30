@@ -337,7 +337,7 @@ contains
 		integer :: j
 
 		do j = jmin, jmax
-			z(0,j) = 0.4d0*sin(2*pi*time/12.d0/3.6d3)
+			z(0,j) = 0.4d0*sin(2.d0*pi*time/12.d0/3.6d3)
 		end do
 
 	end subroutine channel_z

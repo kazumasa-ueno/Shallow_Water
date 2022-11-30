@@ -21,14 +21,14 @@ contains
 				jff = 2*jc
 				Auc(ic,jc) = (Auf(iff,jff) + Auf(iff,jff-1))/2.d0
 				Avc(ic,jc) = (Avf(iff,jff) + Avf(iff-1,jff))/2.d0
-				! Azc(ic,jc) = (Azf(iff,jff) + Azf(iff-1,jff) + Azf(iff,jff-1) + Azf(iff-1,jff-1))/4.d0
+				Azc(ic,jc) = (Azf(iff,jff) + Azf(iff-1,jff) + Azf(iff,jff-1) + Azf(iff-1,jff-1))/4.d0
 			end do
 			Auc(0,jc) = (Auf(0,jff) + Auf(0,jff-1))/2.d0
 		end do
 		do ic = 1, Nx
 			Avc(ic,0) = (Avf(iff,0) + Avf(iff-1,0))/2.d0
 		end do
-		call calc_Az(Auc,Avc,Nx,Ny,Azc)
+		! call calc_Az(Auc,Avc,Nx,Ny,Azc)
 		! do jc = 1, Ny
 		! 	do ic = 1, Nx
 				! Azc(ic,jc) = 1 + Auc(ic-1,jc) + Auc(ic,jc) + Avc(ic,jc-1) + Avc(ic,jc)
@@ -66,20 +66,31 @@ contains
 		real(8), intent(out) :: df(0:Nx+1,0:Ny+1)
 
 		integer :: ic, jc, iff, jff
-		real(8) :: dc1, dc2, dc3, dc4
+		real(8) :: dc1, dc2, dc3, dc4, dc5
 
-		do jff = 0, Ny, 2
-			do iff = 0, Nx, 2
+		do jff = 2, Ny, 2
+			do iff = 2, Nx, 2
+		! do jff = 0, Ny, 2
+		! 	do iff = 0, Nx, 2
 				ic = iff/2
 				jc = jff/2
 				dc1 = dc(ic,jc)
-				dc2 = dc(ic,jc+1)
-				dc3 = dc(ic+1,jc)
-				dc4 = dc(ic+1,jc+1)
-				df(iff  ,jff  ) = (9*dc1+3*dc2+3*dc3+dc4)/16.d0
-				df(iff  ,jff+1) = (9*dc3+3*dc4+3*dc1+dc2)/16.d0
-				df(iff+1,jff  ) = (9*dc2+3*dc1+3*dc4+dc3)/16.d0
-				df(iff+1,jff+1) = (9*dc4+3*dc2+3*dc3+dc1)/16.d0
+				dc2 = dc(ic-1,jc-1)
+				dc3 = dc(ic-1,jc+1)
+				dc4 = dc(ic+1,jc-1)
+				dc5 = dc(ic+1,jc+1)
+				df(iff  ,jff  ) = (3*dc1+dc5)*0.25
+				df(iff  ,jff-1) = (3*dc1+dc3)*0.25
+				df(iff-1,jff  ) = (3*dc1+dc4)*0.25
+				df(iff-1,jff-1) = (3*dc1+dc2)*0.25
+				! dc1 = dc(ic,jc)
+				! dc2 = dc(ic,jc+1)
+				! dc3 = dc(ic+1,jc)
+				! dc4 = dc(ic+1,jc+1)
+				! df(iff  ,jff  ) = (9*dc1+3*dc2+3*dc3+dc4)/16.d0
+				! df(iff  ,jff+1) = (9*dc3+3*dc4+3*dc1+dc2)/16.d0
+				! df(iff+1,jff  ) = (9*dc2+3*dc1+3*dc4+dc3)/16.d0
+				! df(iff+1,jff+1) = (9*dc4+3*dc2+3*dc3+dc1)/16.d0
 			end do
 		end do
 		

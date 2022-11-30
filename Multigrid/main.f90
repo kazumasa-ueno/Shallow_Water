@@ -4,11 +4,12 @@ program main
 	use transfer_mod
 	implicit none
 	
-	integer, parameter :: l = 5
+	integer, parameter :: l = 3
 	! integer, parameter :: Nx = 2**l, Ny = 2**(l-1)
-	integer, parameter :: Nx = 160*4, Ny = 80*4
+	! integer, parameter :: Nx = 160, Ny = 80
+	integer, parameter :: Nx = 48, Ny = 24
 	integer, parameter :: ntmax = 100
-	integer, parameter :: nu1 = 1, nu2 = 1
+	integer, parameter :: nu1 = 2, nu2 = 1
 	real(8), parameter :: g = 9.81d0 !gravity acceleration
 	real(8), parameter :: Cz = 80.d0
 	real(8), parameter :: pi = 4*atan(1.d0)
@@ -29,14 +30,21 @@ program main
 	!for debug
 	real(8) :: Prev(0:Nx+1,0:Ny+1), tmp((Nx+2)*(Ny+2))
 
-	open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
+	open(unit=10, file="./output/um.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
-	open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
+	open(unit=11, file="./output/vm.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
-	open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
+	open(unit=12, file="./output/zm.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
-	open(unit=20, file="./output/zc.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
+	open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
+	if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+	open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
+	if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
+	open(unit=22, file="./output/z3.txt", iostat=ios, status="replace", action="write")
+	if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
+	open(unit=30, file="./output/res2.txt", iostat=ios, status="replace", action="write")
+	if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
+	
 
 	call calc_channel(Ny,Y,jmin,jmax)
 	call initialize(u,v,z,gamma,h,Nx,Ny,jmin,jmax)
@@ -51,13 +59,17 @@ program main
 		call calc_Az(Au,Av,Nx,Ny,Az)
 		call calc_b(u,v,z,gamma,h,f,dt,dx,dy,dtau,Nx,Ny,b)
 		do cyc = 1, 100
-			Prev(:,:) = z(:,:)
+			! Prev(:,:) = z(:,:)
 			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
 			write(*,*) 'cyc = ', cyc, Res
+			if(times==5) then
+				write(30,*) Res
+			end if
 
 			! call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			tmp(:) = reshape(Prev(:,:) - z(:,:),(/(Nx+2)*(Ny+2)/))
-			write(*,*) 'cyc = ', cyc, dot_product(tmp,tmp)
+			call boundary(z,Nx,Ny,jmin,jmax)
+			! tmp(:) = reshape(Prev(:,:) - z(:,:),(/(Nx+2)*(Ny+2)/))
+			! write(*,*) 'cyc = ', cyc, dot_product(tmp,tmp)
 			! if(times==100) then
 			! 	write(12,*) z(1:Nx,1:Ny)
 			! end if
@@ -121,11 +133,11 @@ contains
 		!Presmoothing
 		do nt = 1, nu1
 			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			if(k==l) then
-				call boundary(z,Nx,Ny,jmin,jmax)
-			else
-				call boundary_defect(z,Nx,Ny)
-			end if
+			! if(k==l) then
+			! 	call boundary(z,Nx,Ny,jmin,jmax)
+			! else
+			! 	call boundary_defect(z,Nx,Ny)
+			! end if
 
 		end do
 		! if (k==1) then
@@ -169,7 +181,7 @@ contains
 		!Compute an approximate solution v of the defect equation on k-1
 		wc(:,:) = 0.d0
 		if(k==1) then
-			do nt = 1, 100
+			do nt = 1, 1000
 				call smooth(wc,Auc,Avc,Azc,dc,Nxc,Nyc,jminc,jmaxc)
 				! call boundary_defect(wc,Nxc,Nyc)
 				! write(*,*) jminc,jmaxc
@@ -191,7 +203,7 @@ contains
 		!Postsmoothing
 		do nt = 1, nu2
 			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			call boundary_defect(z,Nx,Ny)
+			! call boundary_defect(z,Nx,Ny)
 			! if(k==l) then
 			! 	call boundary(z,Nx,Ny,jmin,jmax)
 			! else
@@ -207,7 +219,15 @@ contains
 		end do
 		Res = Res**0.5d0
 
-		! write(*,*) "^_^"
+		! select case(k)
+		! case(1)
+		! 	write(20,*) z(1:Nx,1:Ny)
+		! case(2)
+		! 	write(21,*) z(1:Nx,1:Ny)
+		! case(3)
+		! 	write(22,*) z(1:Nx,1:Ny)
+		! case default
+		! end select
 
 	end subroutine MGCYC
 
