@@ -1,3 +1,25 @@
+!********************************************
+! 色々な変数を計算するためのモジュール
+!	when_l: 			dx,dyを計算
+!	calc_f: 			コリオリパラメータを計算
+!	calc_u: 			zの値からuを計算
+!	calc_v: 			zの値からvを計算
+!	calc_gamma: 	zの値からgammaを計算
+!	calc_Au:			Auの値を計算
+!	calc_Av:			Avの値を計算
+!	calc_Az:			Azの値を計算
+!	calc_b:				bの値を計算
+!	calc_Fu:			移流元のuの値を計算
+!	calc_Fv:			移流元のvの値を計算
+!	inner_u:			uの内装を計算
+!	inner_v:			vの内装を計算
+!	z_frac:				分数インデックスでの値を計算
+!	calc_channel:	湾幅のインデックスを計算
+!	channel_z:		潮位の時間変化を計算
+!	channel_z_defect:		潮位の時間変化の残差
+!	calc_res:			残差を計算
+!********************************************
+
 module calc_variables_mod
 	use boundary_mod
 	implicit none
@@ -352,5 +374,24 @@ contains
 		end do
 
 	end subroutine channel_z_defect
+
+	subroutine calc_res(z,Au,Av,Az,b,Nx,Ny,Res)
+		implicit none
+		
+		integer, intent(in) :: Nx, Ny
+		real(8), intent(in) :: z(0:Nx+1,0:Ny+1), Au(0:Nx,1:Ny), Av(1:Nx,0:Ny), Az(1:Nx,1:Ny), b(1:Nx,1:Ny)
+		real(8), intent(out) :: Res
+
+		integer :: i, j
+
+		Res = 0.d0
+		do j = 1, Ny
+			do i = 1, Nx
+				Res = Res + (b(i,j) + Au(i-1,j)*z(i-1,j) + Au(i,j)*z(i+1,j) + Av(i,j-1)*z(i,j-1) + Av(i,j)*z(i,j+1) - Az(i,j)*z(i,j))**2
+			end do
+		end do
+		Res = (Res**0.5d0)/Nx/Ny
+
+	end subroutine calc_res
 
 end module calc_variables_mod

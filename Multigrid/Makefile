@@ -14,6 +14,7 @@ OBJ			:= $(patsubst %.f90, %.o, $(notdir $(SRC)))
 #executable(s)
 EXEC		:= main
 # EXEC		:= test
+.PHONY: all
 all:		$(EXEC)
 
 #rule(s)
@@ -22,7 +23,8 @@ $(EXEC):	$(OBJ)
 %.o:		%.f90
 	$(FC) $(FFLAGS) -o $@ -c $<
 
-# clean up                                                                                           
+# clean up
+.PHONY: clean
 clean:
 	rm -rf $(OBJ)
 	rm -rf *.mod
