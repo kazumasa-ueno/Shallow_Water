@@ -4,7 +4,7 @@
 !	calc_f: 			コリオリパラメータを計算
 !	calc_u: 			zの値からuを計算
 !	calc_v: 			zの値からvを計算
-!	calc_gamma: 	zの値からgammaを計算
+!	calc_gamma: 			zの値からgammaを計算
 !	calc_Au:			Auの値を計算
 !	calc_Av:			Avの値を計算
 !	calc_Az:			Azの値を計算
@@ -14,8 +14,8 @@
 !	inner_u:			uの内装を計算
 !	inner_v:			vの内装を計算
 !	z_frac:				分数インデックスでの値を計算
-!	calc_channel:	湾幅のインデックスを計算
-!	channel_z:		潮位の時間変化を計算
+!	calc_channel:			湾幅のインデックスを計算
+!	channel_z:			潮位の時間変化を計算
 !	channel_z_defect:		潮位の時間変化の残差
 !	calc_res:			残差を計算
 !********************************************
