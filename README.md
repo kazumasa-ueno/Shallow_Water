@@ -6,17 +6,24 @@ This model solving a 2D shallow water equations refering to Spitaleri and Corina
 $$
 \frac{\partial u}{\partial t} + u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y} + g \frac{\partial z}{\partial x} = - \gamma u + f v
 $$
+
 $$
 \frac{\partial v}{\partial t} + u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y} + g \frac{\partial z}{\partial y} = - \gamma v - f u
 $$
+
 $$
 \frac{\partial z}{\partial t} + \frac{\partial [(h+z)u]}{\partial x} + \frac{\partial [(h+z)v]}{\partial y}  = 0
 $$
 
 ## some notations
 (a) coarser-grid construction: standard coarsening
+
 (b) type of grids: Arakawa C-grid
+
 (c) relaxation for error smoothing: Gauss-Seidel Lexicographic order
+
 (d) restriction: local averaging
+
 (e) interpolation: weighted interpolation
+
 (f) multigrid cycling: V-cycle
