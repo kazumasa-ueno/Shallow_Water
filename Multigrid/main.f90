@@ -1,13 +1,21 @@
+!********************************************
+! 浅水波方程式をマルチグリッド法で解くプログラム
+! Semi-implicit Semi-Lagtange法を使用して離散化
+!********************************************
+
 program main
 	use boundary_mod
 	use calc_variables_mod
 	use transfer_mod
+	use,intrinsic :: iso_fortran_env
 	implicit none
+
+	integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax
 	
-	integer, parameter :: l = 4
-	integer, parameter :: Nx = 160, Ny = 80
+	integer, parameter :: l = 5								!グリッドの深さ
+	integer, parameter :: Nx = 160, Ny = 80		!グリッド数
 	! integer, parameter :: Nx = 48, Ny = 24
-	integer, parameter :: ntmax = 10
+	integer, parameter :: ntmax = 1
 	integer, parameter :: nu1 = 2, nu2 = 1
 	real(8), parameter :: g = 9.81d0 !gravity acceleration
 	real(8), parameter :: Cz = 80.d0
@@ -15,7 +23,7 @@ program main
 	real(8), parameter :: f0 = 4*pi/86400
 	real(8), parameter :: X = 6.d3, Y = 3.d3
 	real(8), parameter :: dt = 60.d0*12
-	real(8), parameter :: dtau = dt/100.d0
+	real(8), parameter :: dtau = dt/10.d0
 
 	real(8) :: f(0:Ny+1) !corioli parameter
 	real(8) :: h(0:Nx+1,0:Ny+1)
@@ -49,16 +57,16 @@ program main
 	if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
 	open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-	open(unit=30, file="./output/res3.txt", iostat=ios, status="replace", action="write")
+	open(unit=30, file="./output/resno.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
 	
 
 	call calc_channel(Ny,Y,jmin,jmax)
 	call initialize(u,v,z,gamma,h,Nx,Ny,jmin,jmax)
-	! f(:) = 0.d0
 	call calc_f(f,Ny,f0,Y)
 	call when_l(l,X,Y,Nx,Ny,dx,dy)
 
+	call system_clock(time_begin_c, CountPerSec, CountMax)
 	do times = 1, ntmax
 		call channel_z(z,(dt-1)*times,pi,Nx,Ny,jmin,jmax) !calculate z(1,jmin:jmax)
 		call calc_Au(z,gamma,h,g,dt,dx,Nx,Ny,Au)
@@ -70,29 +78,27 @@ program main
 		cyc = 0
 		do while(Res>1.e-5)
 			cyc = cyc + 1
-		! do cyc = 1, 100
 			Prev(:,:) = z(:,:)
-			! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-			if(times==5) then
-				write(30,*) Res
-			end if
 
-			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
+
+			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
+			! call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
 			call boundary(z,Nx,Ny,jmin,jmax)
+
+
 			tmp(:) = reshape(Prev(:,:) - z(:,:),(/(Nx+2)*(Ny+2)/))
 			difference = dot_product(tmp,tmp)
-			! write(*,*) 'cyc = ', cyc, difference
-			! if(times==100) then
-			! 	write(12,*) z(1:Nx,1:Ny)
-			! end if
 			Res = 0.d0
 			do j = 1, Ny
 				do i = 1, Nx
 					Res = Res + (b(i,j) + Au(i-1,j)*z(i-1,j) + Au(i,j)*z(i+1,j) + Av(i,j-1)*z(i,j-1) + Av(i,j)*z(i,j+1) - Az(i,j)*z(i,j))**2
 				end do
 			end do
-			Res = Res**0.5d0
-			write(*,*) 'cyc = ', cyc, Res
+			Res = (Res**0.5d0)/Nx/Ny
+			if(times==5 .and. cyc<101) then
+				write(30,*) Res
+			end if
+			write(*,*) 'cyc = ', cyc, Res, difference
 		end do
 
 		write(*,*) 'times = ', times
@@ -107,10 +113,11 @@ program main
 				write(11,*) z_frac(v(i,j-1:j))
 			end do
 		end do
-		! write(10,*) u(1:Nx,1:Ny)
-		! write(11,*) v(1:Nx,1:Ny)
 		write(12,*) z(1:Nx,1:Ny)
 	end do
+	call system_clock(time_end_c)
+	print *,time_begin_c,time_end_c, CountPerSec,CountMax
+	write(*,*) real(time_end_c - time_begin_c)/CountPerSec,"sec"
 
 	stop
 contains
@@ -128,11 +135,6 @@ contains
 		z(:,:) = 0.d0
 		h(:,:) = 0.5d0
 		h(:,jmin:jmax) = 5.d0
-		! do j = 1, Ny
-		! 	do i = 1, Nx
-		! 		z(i,j) = 10*exp(-((i-Nx)**2+(j-Ny/2)**2)/2.d0/16.d0**2) !!Gaussian
-		! 	end do
-		! end do
 		gamma(:,:) = 0.d0
 		
 	end subroutine initialize
@@ -154,40 +156,15 @@ contains
 		!Presmoothing
 		do nt = 1, nu1
 			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			! if(k==l) then
-			! 	call boundary(z,Nx,Ny,jmin,jmax)
-			! else
-			! 	call boundary_defect(z,Nx,Ny)
-			! end if
-
 		end do
-		! if (k==1) then
-		! 	write(20,*) z(1:Nx,1:Ny)
-		! end if
-		! select case(k)
-		! case(1)
-		! 	write(23,*) z(1:Nx,1:Ny)
-		! case(2)
-		! 	write(24,*) z(1:Nx,1:Ny)
-		! case(3)
-		! 	write(25,*) z(1:Nx,1:Ny)
-		! case default
-		! end select
 
 		!Coarse grid correction
 		!Compute the defect
 		do j = 1, Ny
-			! i = 1
-			! if (j<jmin .or. j>jmax) then
-			! 	df(i,j) = b(i,j) + Au(i-1,j)*z(i-1,j) + Au(i,j)*z(i+1,j) + Av(i,j-1)*z(i,j-1) + Av(i,j)*z(i,j+1) - Az(i,j)*z(i,j)
-			! end if
 			do i = 1, Nx
 				df(i,j) = b(i,j) + Au(i-1,j)*z(i-1,j) + Au(i,j)*z(i+1,j) + Av(i,j-1)*z(i,j-1) + Av(i,j)*z(i,j+1) - Az(i,j)*z(i,j)
 			end do
 		end do
-		! if(k==2) then
-		! 	write(20,*) Au(1:Nx,1:Ny)
-		! end if
 
 		!Restrice the defect
 		dc(:,:) = 0.d0
@@ -195,29 +172,11 @@ contains
 		call Prolongation_defect(df,dc,Nxc,Nyc)
 		call calc_channel(Nyc,Y,jminc,jmaxc)
 
-		! if(k==1) then
-			! write(20,*) Azc(1:Nxc,1:Nyc)
-			! write(*,*) Auc(0:1,10), Avc(1,9:10), Azc(1,10), dc(1,10)
-			! write(*,*) Azc(:,:)
-		! 	do j = 1, Nyc
-		! 		do i = 1, Nxc
-		! 			write(*,*) i, j, (Auc(i,j)+Avc(i,j))/(Azc(i,j)-Auc(i-1,j)-Avc(i,j-1)) 
-		! 			write(*,*) Auc(i-1:i,j), Avc(i,j-1:j), Azc(i,j)
-		! 			write(*,*) Azc(i,j)
-		! 		end do
-		! 	end do
-		! end if
-
 		!Compute an approximate solution v of the defect equation on k-1
 		wc(:,:) = 0.d0
 		if(k==1) then
 			do nt = 1, 1
 				call smooth(wc,Auc,Avc,Azc,dc,Nxc,Nyc,jminc,jmaxc)
-				! call boundary_defect(wc,Nxc,Nyc)
-				! write(*,*) jminc,jmaxc
-				! write(*,*) wc(1,9:11)
-				! write(*,*) Auc(0:1,10), Avc(1,9:10), Azc(1,10), dc(1,10)
-				! write(26,*) wc(1:Nxc,1:Nyc)
 			end do
 		else
 			call MGCYC(l,k-1,wc,Auc,Avc,Azc,dc,nu1,nu2,Y,Nxc,Nyc,Nxc/2,Nyc/2,Res)
@@ -233,31 +192,7 @@ contains
 		!Postsmoothing
 		do nt = 1, nu2
 			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			! call boundary_defect(z,Nx,Ny)
-			! if(k==l) then
-			! 	call boundary(z,Nx,Ny,jmin,jmax)
-			! else
-			! 	call boundary_defect(z,Nx,Ny)
-			! end if
 		end do
-
-		Res = 0.d0
-		do j = 1, Ny
-			do i = 1, Nx
-				Res = Res + (b(i,j) + Au(i-1,j)*z(i-1,j) + Au(i,j)*z(i+1,j) + Av(i,j-1)*z(i,j-1) + Av(i,j)*z(i,j+1) - Az(i,j)*z(i,j))**2
-			end do
-		end do
-		Res = Res**0.5d0
-
-		! select case(k)
-		! case(1)
-		! 	write(20,*) z(1:Nx,1:Ny)
-		! case(2)
-		! 	write(21,*) z(1:Nx,1:Ny)
-		! case(3)
-		! 	write(22,*) z(1:Nx,1:Ny)
-		! case default
-		! end select
 
 	end subroutine MGCYC
 
@@ -272,16 +207,11 @@ contains
 
 		do j = 1, Ny
 		! do j = Ny, 1, -1
-			! i = 1
-			! if (j<jmin .or. j>jmax) then
-			! 	z(i,j) = (b(i,j)+Au(i-1,j)*z(i-1,j)+Au(i,j)*z(i+1,j)+Av(i,j-1)*z(i,j-1)+Av(i,j)*z(i,j+1))/Az(i,j)
-			! end if 
 			do i = 1, Nx
 			! do i = Nx, 1, -1
 				z(i,j) = (b(i,j)+Au(i-1,j)*z(i-1,j)+Au(i,j)*z(i+1,j)+Av(i,j-1)*z(i,j-1)+Av(i,j)*z(i,j+1))/Az(i,j)
 			end do
 		end do
-		! call boundary(z,Nx,Ny,jmin,jmax)
 
 	end subroutine smooth
 

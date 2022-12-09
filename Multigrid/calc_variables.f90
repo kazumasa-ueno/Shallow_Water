@@ -61,7 +61,6 @@ contains
 				Fu = calc_Fu(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
 				Fv = calc_Fv(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
 				u(i,j) = (Fu - g*(dt/dx)*(z(i+1,j)-z(i,j)) - f(j)*dt*Fv) / (1+z_frac(gamma(i:i+1,j))*dt)
-				! u(i,j) = (u(i,j) - g*(dt/dx)*(z(i+1,j)-z(i,j)) - f(j)*dt*v(i,j)) / (1+z_frac(gamma(i:i+1,j))*dt)
 			end do
 		end do
 		call boundary_u(u,Nx,Ny)
@@ -85,7 +84,6 @@ contains
 				Fu = calc_Fu(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
 				Fv = calc_Fv(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
 				v(i,j) = (Fv - g*(dt/dy)*(z(i,j+1)-z(i,j)) + f(j)*dt*Fu) / (1+z_frac(gamma(i,j:j+1))*dt)
-				! v(i,j) = (v(i,j) - g*(dt/dy)*(z(i,j+1)-z(i,j)) + f(j)*dt*u(i,j)) / (1+z_frac(gamma(i,j:j+1))*dt)
 			end do
 		end do
 		call boundary_v(v,Nx,Ny)
@@ -156,7 +154,6 @@ contains
 		do j = 1, Ny
 			do i = 1, Nx
 				Az(i,j) = 1 + Au(i,j) + Au(i-1,j) + Av(i,j) + Av(i,j-1)
-				! write(*,*) Az(i,j)
 			end do
 		end do
 

@@ -3,32 +3,6 @@ module boundary_mod
 	
 contains
 
-	! subroutine boundary(z,u,v,f,g,dt,dx,dy,Nx,Ny)
-	! 	implicit none
-
-	! 	integer, intent(in) :: Nx, Ny
-	! 	real(8), intent(in) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), f(0:Ny+1), g, dt, dx, dy
-	! 	real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
-
-	! 	integer :: i, j
-	! 	real(8) :: Fu, Fv
-
-	! 	do i = 1, Nx
-	! 		Fu = calc_Fu(i,1,u,v,dt,dx,dy,Nx,Ny)
-	! 		z(i,0) = z(i,1) + f(1)*dy/g*Fu
-	! 		Fu = calc_Fu(i,Ny,u,v,dt,dx,dy,Nx,Ny)
-	! 		z(i,Ny+1) = z(i,Ny) + f(Ny)*dy/g*Fu
-	! 	end do
-
-	! 	do j = 1, Ny
-	! 		Fv = calc_Fv(1,j,u,v,dt,dx,dy,Nx,Ny)
-	! 		z(0,j) = z(1,j) - z_frac(f(j:j+1))*dx/g*Fv
-	! 		Fv = calc_Fv(Nx,j,u,v,dt,dx,dy,Nx,Ny)
-	! 		z(Nx+1,j) = z(Nx,j) - z_frac(f(j:j+1))*dx/g*Fv
-	! 	end do
-		
-	! end subroutine boundary
-
 	subroutine boundary(z,Nx,Ny,jmin,jmax)
 		implicit none
 
@@ -70,8 +44,6 @@ contains
 		integer, intent(in) :: Nx, Ny
 		real(8), intent(inout) :: u(0:Nx,0:Ny+1)
 
-		! u(0,:) = 0.d0
-		! u(Nx,:) = 0.d0
 		u(:,0) = -u(:,1)
 		u(:,Ny+1) = -u(:,Ny)
 
@@ -83,8 +55,6 @@ contains
 		integer, intent(in) :: Nx, Ny
 		real(8), intent(inout) :: v(0:Nx+1,0:Ny)
 
-		! v(:,0) = 0.d0
-		! v(:,Ny) = 0.d0
 		v(0,:) = -v(1,:)
 		v(Nx+1,:) = -v(Nx,:)
 		
