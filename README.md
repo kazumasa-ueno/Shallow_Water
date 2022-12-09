@@ -4,8 +4,12 @@ This model solving a 2D shallow water equations refering to Spitaleri and Corina
 
 ## Equations
 $$
-\frac{\partial u}{\partial t} + u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y} + g \frac{\partial z}{\partial x} = - \gamma u + f v \\
-\frac{\partial v}{\partial t} + u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y} + g \frac{\partial z}{\partial y} = - \gamma v - f u \\
+\frac{\partial u}{\partial t} + u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y} + g \frac{\partial z}{\partial x} = - \gamma u + f v
+$$
+$$
+\frac{\partial v}{\partial t} + u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y} + g \frac{\partial z}{\partial y} = - \gamma v - f u
+$$
+$$
 \frac{\partial z}{\partial t} + \frac{\partial [(h+z)u]}{\partial x} + \frac{\partial [(h+z)v]}{\partial y}  = 0
 $$
 
