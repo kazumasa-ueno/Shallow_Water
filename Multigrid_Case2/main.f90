@@ -33,7 +33,6 @@ program main
 	real(8) :: Res, difference	!Resは残差のl2ノルム、differenceは前の時間との残差	
 	integer :: times, cyc !時間ループ用と収束までの繰り返し用
 	integer :: ios !ファイル開く用
-	integer :: jmin, jmax !湾の入り口幅
 	integer :: i, j !空間ループ用
 
 	!for debug
@@ -62,11 +61,9 @@ program main
 	open(unit=30, file="./output/resno.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
 	
-	!jmin,jmaxの計算
-	call calc_channel(Ny,Y,jmin,jmax)
-
+	
 	!u,v,z,gamma,hの初期化
-	call initialize(u,v,z,gamma,h,Nx,Ny,jmin,jmax)
+	call initialize(u,v,z,gamma,h,Nx,Ny)
 
 	!!コリオリfと格子間隔dx,dyの計算
 	call calc_f(f,Ny,f0,Y)
@@ -79,7 +76,6 @@ program main
 		call system_clock(time_begin_c, CountPerSec, CountMax)
 
 		!係数計算
-		call channel_z(z,(dt-1)*times,pi,Nx,Ny,jmin,jmax) !calculate z(1,jmin:jmax)
 		call calc_Au(z,gamma,h,g,dt,dx,Nx,Ny,Au)
 		call calc_Av(z,gamma,h,g,dt,dy,Nx,Ny,Av)
 		call calc_Az(Au,Av,Nx,Ny,Az)
@@ -96,8 +92,8 @@ program main
 
 			!zの計算
 			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-			! call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			call boundary(z,Nx,Ny,jmin,jmax)
+			! call smooth(z,Au,Av,Az,b,Nx,Ny)
+			call boundary(z,Nx,Ny)
 
 
 			tmp(:) = reshape(Prev(:,:) - z(:,:),(/(Nx+2)*(Ny+2)/))
@@ -137,10 +133,10 @@ program main
 	stop
 contains
 
-	subroutine initialize(u,v,z,gamma,h,Nx,Ny,jmin,jmax)
+	subroutine initialize(u,v,z,gamma,h,Nx,Ny)
 		implicit none
 
-		integer, intent(in) :: Nx, Ny, jmin, jmax
+		integer, intent(in) :: Nx, Ny
 		real(8), intent(out) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), h(0:Nx+1,0:Ny+1)
 
 		integer :: i, j
@@ -149,7 +145,6 @@ contains
 		v(:,:) = 0.d0
 		z(:,:) = 0.d0
 		h(:,:) = 0.5d0 ![m]
-		h(:,jmin:jmax) = 5.d0 ![m]
 		gamma(:,:) = 0.d0
 		
 	end subroutine initialize
@@ -162,15 +157,14 @@ contains
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 		real(8), intent(out) :: Res
 
-		integer :: nt, i, j, jmin, jmax, jminc, jmaxc, ntmax
+		integer :: nt, i, j, ntmax
 		real(8) :: df(1:Nx,1:Ny), dc(1:Nxc,1:Nyc), wf(0:Nx+1,0:Ny+1), wc(0:Nxc+1,0:Nyc+1) !defects and errors etc.
 		real(8) :: Auc(0:Nxc,1:Nyc), Avc(1:Nxc,0:Nyc), Azc(1:Nxc,1:Nyc)
 
-		call calc_channel(Ny,Y,jmin,jmax)
 
 		!Presmoothing
 		do nt = 1, nu1
-			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
+			call smooth(z,Au,Av,Az,b,Nx,Ny)
 		end do
 
 		!Coarse grid correction
@@ -185,13 +179,12 @@ contains
 		dc(:,:) = 0.d0
 		call Prolongation(Au,Av,Az,Auc,Avc,Azc,Nxc,Nyc)
 		call Prolongation_defect(df,dc,Nxc,Nyc)
-		call calc_channel(Nyc,Y,jminc,jmaxc)
 
 		!Compute an approximate solution v of the defect equation on k-1
 		wc(:,:) = 0.d0
 		if(k==1) then
 			do nt = 1, 1
-				call smooth(wc,Auc,Avc,Azc,dc,Nxc,Nyc,jminc,jmaxc)
+				call smooth(wc,Auc,Avc,Azc,dc,Nxc,Nyc)
 			end do
 		else
 			call MGCYC(l,k-1,wc,Auc,Avc,Azc,dc,nu1,nu2,Y,Nxc,Nyc,Nxc/2,Nyc/2,Res)
@@ -206,15 +199,15 @@ contains
 
 		!Postsmoothing
 		do nt = 1, nu2
-			call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
+			call smooth(z,Au,Av,Az,b,Nx,Ny)
 		end do
 
 	end subroutine MGCYC
 
-	subroutine smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
+	subroutine smooth(z,Au,Av,Az,b,Nx,Ny)
 		implicit none
 		
-		integer, intent(in) :: Nx, Ny, jmin, jmax !jmin and jmax is channel indice
+		integer, intent(in) :: Nx, Ny
 		real(8), intent(in) :: Au(0:Nx,1:Ny), Av(1:Nx,0:Ny), Az(1:Nx,1:Ny), b(1:Nx,1:Ny)
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 
