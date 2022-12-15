@@ -15,7 +15,7 @@ $$
 \frac{\partial z}{\partial t} + \frac{\partial [(h+z)u]}{\partial x} + \frac{\partial [(h+z)v]}{\partial y}  = 0
 $$
 
-## some notations
+## Some notations for Multigrid methods
 (a) coarser-grid construction: standard coarsening
 
 (b) type of grids: Arakawa C-grid
