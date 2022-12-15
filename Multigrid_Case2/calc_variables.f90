@@ -53,16 +53,17 @@ contains
 		integer :: j
 		real(8) :: dy, dy_rad
 
-		! dy = Y / (Ny-1)
-		! dy_rad = dy / earth_R * pi
+		dy = Y / (Ny-1)
+		dy_rad = dy / earth_R
 
-		! do j = 1, Ny
-		! 	f(j) = f0 * sin((j-Ny/2)*dy_rad + pi/6.d0)
-		! end do
-		! f(0) = f(1)
-		! f(Ny+1) = f(Ny)
+		do j = 1, Ny
+			f(j) = f0 * sin((j-Ny/2)*dy_rad + pi/6.d0)
+		end do
+		f(0) = f(1)
+		f(Ny+1) = f(Ny)
 		
-		f(:) = f0
+		! f(:) = f0
+		! f(:) = 0.d0
 
 	end subroutine calc_f
 
@@ -82,7 +83,7 @@ contains
 			do i = 1, Nx-1
 				Fu = calc_Fu(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
 				Fv = calc_Fv(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
-				u(i,j) = (Fu - g*(dt/dx)*(z(i+1,j)-z(i,j)) - f(j)*dt*Fv) / (1+z_frac(gamma(i:i+1,j))*dt)
+				u(i,j) = (Fu - g*(dt/dx)*(z(i+1,j)-z(i,j)) + f(j)*dt*Fv) / (1+z_frac(gamma(i:i+1,j))*dt)
 			end do
 		end do
 		call boundary_u(u,Nx,Ny)
@@ -105,7 +106,7 @@ contains
 			do i = 1, Nx-1
 				Fu = calc_Fu(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
 				Fv = calc_Fv(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
-				v(i,j) = (Fv - g*(dt/dy)*(z(i,j+1)-z(i,j)) + f(j)*dt*Fu) / (1+z_frac(gamma(i,j:j+1))*dt)
+				v(i,j) = (Fv - g*(dt/dy)*(z(i,j+1)-z(i,j)) - f(j)*dt*Fu) / (1+z_frac(gamma(i,j:j+1))*dt)
 			end do
 		end do
 		call boundary_v(v,Nx,Ny)
@@ -203,14 +204,14 @@ contains
 				Fv(3) = calc_Fv(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
 				b(i,j) = z(i,j) - (dt/dx) * ( &
 				& (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
-				& * (Fu(1)-z_frac(f(j:j+1))*dt*Fv(1)) &
+				& * (Fu(1)+z_frac(f(j:j+1))*dt*Fv(1)) &
 				& - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
-				& * (Fu(2)-z_frac(f(j:j+1))*dt*Fv(2)) ) &
+				& * (Fu(2)+z_frac(f(j:j+1))*dt*Fv(2)) ) &
 				& - (dt/dy) * ( &
 				& (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
-				& * (Fv(1)+f(j)*dt*Fu(1)) &
+				& * (Fv(1)-f(j)*dt*Fu(1)) &
 				& - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
-				& * (Fv(3)+f(j-1)*dt*Fu(3)) )
+				& * (Fv(3)-f(j-1)*dt*Fu(3)) )
 			end do
 		end do
 
