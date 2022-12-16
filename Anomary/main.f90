@@ -13,10 +13,10 @@ program main
 
 	integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
 	
-	integer, parameter :: l = 5								!グリッドの深さ
+	integer, parameter :: l = 9								!グリッドの深さ
 	integer, parameter :: Nx = 160, Ny = 80		!グリッド数
-	! integer, parameter :: Nx = 48, Ny = 24
-	integer, parameter :: ntmax = 2000				!時間ステップ
+	! integer, parameter :: Nx = 256*8, Ny = 128*8
+	integer, parameter :: ntmax = 1				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
 	real(8), parameter :: g = 9.81d0 					!重力定数
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
@@ -60,7 +60,7 @@ program main
 	! if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
 	! open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
 	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-	! open(unit=30, file="./output/resno.txt", iostat=ios, status="replace", action="write")
+	! open(unit=30, file="./output/res4.txt", iostat=ios, status="replace", action="write")
 	! if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
 	
 	
@@ -97,7 +97,7 @@ program main
 		cyc = 0
 
 		!収束するまで繰り返し
-		do while(Res>1.e-8)
+		do while(Res>1.e-9)
 			cyc = cyc + 1
 			Prev(:,:) = z(:,:)
 
@@ -115,12 +115,12 @@ program main
 			if(times==5 .and. cyc<101) then
 				write(30,*) Res
 			end if
-			! write(*,*) 'cyc = ', cyc, Res, difference
+			write(*,*) 'cyc = ', cyc, Res, difference
 
 		end do
 		! call boundary(z,Nx,Ny)
 
-		write(*,*) 'times = ', times, sum(z)
+		! write(*,*) 'times = ', times, sum(z)
 		u_b(:,:) = u(:,:)
 		v_b(:,:) = v(:,:)
 		call calc_u(u,v_b,z,f,gamma,dt,dx,dy,dtau,g,Nx,Ny)
@@ -130,7 +130,7 @@ program main
 		!時間計測終わり
 		call system_clock(time_end_c)
 		! print *,time_begin_c,time_end_c, CountPerSec,CountMax
-		! write(*,*) real(time_end_c - time_begin_c)/CountPerSec,"sec"
+		write(*,*) real(time_end_c - time_begin_c)/CountPerSec,"sec"
 
 		!格子中心での値を記録
 		do j = 1, Ny
