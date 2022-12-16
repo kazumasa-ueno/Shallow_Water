@@ -53,17 +53,17 @@ contains
 		integer :: j
 		real(8) :: dy, dy_rad
 
-		dy = Y / (Ny-1)
-		dy_rad = dy / earth_R
+		! dy = Y / (Ny-1)
+		! dy_rad = dy / earth_R
 
-		do j = 1, Ny
-			f(j) = f0 * sin((j-Ny/2)*dy_rad + pi/6.d0)
-		end do
-		f(0) = f(1)
-		f(Ny+1) = f(Ny)
+		! do j = 1, Ny
+		! 	f(j) = f0 * sin((j-Ny/2)*dy_rad + pi/6.d0)
+		! end do
+		! f(0) = f(1)
+		! f(Ny+1) = f(Ny)
 		
 		! f(:) = f0
-		! f(:) = 0.d0
+		f(:) = 0.d0
 
 	end subroutine calc_f
 

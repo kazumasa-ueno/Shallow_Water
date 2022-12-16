@@ -7,24 +7,25 @@ module boundary_mod
 	
 contains
 
-	subroutine boundary(z,Nx,Ny,jmin,jmax)
+	subroutine boundary(z,Nx,Ny,jmin,jmax,Fu,Fv,f,g,dx,dy)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny, jmin, jmax
+		real(8), intent(in) :: Fu(:,:), Fv(:,:), f(0:Ny+1), g, dx, dy
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 
 		integer :: i, j
 
-		do j = 0, jmin-1
-			z(0,j) = z(1,j)
+		do j = 1, jmin-1
+			z(0,j) = z(1,j) + f(j)*dx/g*Fv(1,j)
 		end do
-		do j = jmax+1, Ny+1
-			z(0,j) = z(1,j)
+		do j = jmax+1, Ny
+			z(0,j) = z(1,j) + f(j)*dx/g*Fv(1,j)
 		end do
 
-		z(:,0) = z(:,1)
-		z(:,Ny+1) = z(:,Ny)
-		z(Nx+1,:) = z(Nx,:)
+		z(:,0) = z(:,1) - f(1)*dy/g*Fu(:,1)
+		z(:,Ny+1) = z(:,Ny) - f(Ny)*dy/g*Fu(:,2)
+		z(Nx+1,:) = z(Nx,:) + f(:)*dx/g*Fv(2,:)
 		
 	end subroutine boundary
 

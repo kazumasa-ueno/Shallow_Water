@@ -1,4 +1,5 @@
 !********************************************
+! 潮汐による湾の内部での水深の変動
 ! 浅水波方程式をマルチグリッド法で解くプログラム
 ! Semi-implicit Semi-Lagtange法を使用して離散化
 !********************************************
@@ -29,6 +30,7 @@ program main
 	real(8) :: h(0:Nx+1,0:Ny+1)	!基準面からの水深
 	real(8) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), u_b(0:Nx,0:Ny+1), v_b(0:Nx+1,0:Ny) !u_b, v_bは移流計算実行用の一時格納配列
 	real(8) :: Au(0:Nx,1:Ny), Av(1:Nx,0:Ny), Az(1:Nx,1:Ny), b(1:Nx,1:Ny) !係数
+	real(8) :: Fu(Nx,2), Fv(2,Ny)
 	real(8) :: dx, dy	!格子間隔
 	real(8) :: Res, difference	!Resは残差のl2ノルム、differenceは前の時間との残差	
 	integer :: times, cyc !時間ループ用と収束までの繰り返し用
@@ -85,6 +87,15 @@ program main
 		call calc_Az(Au,Av,Nx,Ny,Az)
 		call calc_b(u,v,z,gamma,h,f,dt,dx,dy,dtau,Nx,Ny,b)
 
+		do j = 1, Ny
+			Fv(1,j) = calc_Fv(1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+			Fv(2,j) = calc_Fv(Nx,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+		end do
+		do i = 1, Nx
+			Fu(i,1) = calc_Fu(i,1,u,v,dt,dx,dy,dtau,Nx,Ny)
+			Fu(i,2) = calc_Fu(i,Ny,u,v,dt,dx,dy,dtau,Nx,Ny)
+		end do
+
 		difference = 100 !大きな値にセット
 		Res = 100 !同上
 		cyc = 0
@@ -97,7 +108,7 @@ program main
 			!zの計算
 			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
 			! call smooth(z,Au,Av,Az,b,Nx,Ny,jmin,jmax)
-			call boundary(z,Nx,Ny,jmin,jmax)
+			call boundary(z,Nx,Ny,jmin,jmax,Fu,Fv,f,g,dx,dy)
 
 
 			tmp(:) = reshape(Prev(:,:) - z(:,:),(/(Nx+2)*(Ny+2)/))

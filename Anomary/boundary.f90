@@ -11,7 +11,7 @@ contains
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
-		real(8), intent(in) :: Fu(:,:), Fv(:,:), f(:), g, dx, dy
+		real(8), intent(in) :: Fu(:,:), Fv(:,:), f(0:Ny+1), g, dx, dy
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 
 		integer :: i, j
