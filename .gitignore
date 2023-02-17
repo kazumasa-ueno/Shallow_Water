@@ -1,0 +1,15 @@
+*.mod
+*.o
+*/output/
+*/fig/
+.ipynb_checkpoints/
+main
+a.out
+.DS_Store
+Multigrid_Case2/fort.30
+SimpleCode/
+fort.30
+../Anomary/calc.ipynb
+../Anomary/plot_for_slide.ipynb
+./
+../test.f90
