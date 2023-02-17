@@ -16,7 +16,7 @@ program main
 	integer, parameter :: l = 5								!グリッドの深さ
 	integer, parameter :: Nx = 160, Ny = 80		!グリッド数
 	! integer, parameter :: Nx = 48, Ny = 24
-	integer, parameter :: ntmax = 10					!時間ステップ
+	integer, parameter :: ntmax = 100					!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
 	real(8), parameter :: g = 9.81d0 					!重力定数
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
@@ -47,22 +47,22 @@ program main
 	if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
 	open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
 	if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
-	open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-	open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
-	open(unit=22, file="./output/z3.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
-	open(unit=23, file="./output/z4.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-	open(unit=24, file="./output/z5.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
-	open(unit=25, file="./output/z6.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
-	open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-	open(unit=30, file="./output/resno.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
+	! open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+	! open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
+	! open(unit=22, file="./output/z3.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
+	! open(unit=23, file="./output/z4.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+	! open(unit=24, file="./output/z5.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
+	! open(unit=25, file="./output/z6.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
+	! open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+	! open(unit=30, file="./output/resno.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
 	
 	!jmin,jmaxの計算
 	call calc_channel(Ny,Y,jmin,jmax)
@@ -116,9 +116,9 @@ program main
 
 			call calc_res(z,Au,Av,Az,b,Nx,Ny,Res)
 			
-			if(times==5 .and. cyc<101) then
-				write(30,*) Res
-			end if
+			! if(times==5 .and. cyc<101) then
+			! 	write(30,*) Res
+			! end if
 			write(*,*) 'cyc = ', cyc, Res, difference
 
 		end do

@@ -13,17 +13,19 @@ program main
 
 	integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
 	
-	integer, parameter :: l = 9								!グリッドの深さ
-	integer, parameter :: Nx = 160, Ny = 80		!グリッド数
-	! integer, parameter :: Nx = 256*8, Ny = 128*8
-	integer, parameter :: ntmax = 1				!時間ステップ
+	integer, parameter :: l = 8								!グリッドの深さ
+	! integer, parameter :: Nx = 160, Ny = 80		!グリッド数
+	integer, parameter :: Nx = 512, Ny = 256
+	! integer, parameter :: Nx = 16, Ny = 8
+	integer, parameter :: ntmax = 100				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
 	real(8), parameter :: g = 9.81d0 					!重力定数
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
 	real(8), parameter :: pi = 4*atan(1.d0)		!円周率
 	real(8), parameter :: f0 = 4*pi/86400			!コリオリパラメータf0
-	real(8), parameter :: X = 6.d6, Y = 3.d6	!領域サイズ
-	real(8), parameter :: dt = 60.d0*12				!時間間隔
+	real(8), parameter :: X = 6.d7, Y = 3.d7	!領域サイズ
+	real(8), parameter :: dt = 60.d0*4				!時間間隔
+	! real(8), parameter :: dt = 720.d0				!時間間隔
 	real(8), parameter :: dtau = dt/10.d0			!移流計算用小時間間隔
 
 	real(8) :: f(0:Ny+1) 	!コリオリパラメータ
@@ -40,12 +42,12 @@ program main
 	!for debug
 	real(8) :: Prev(0:Nx+1,0:Ny+1), tmp((Nx+2)*(Ny+2)) !前の値を格納しておくための配列
 
-	open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
-	open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
+	! open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
+	! open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
 	open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
+	! if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
 	! open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
 	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
 	! open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
@@ -60,20 +62,22 @@ program main
 	! if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
 	! open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
 	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-	! open(unit=30, file="./output/res4.txt", iostat=ios, status="replace", action="write")
+	! open(unit=27, file="./output/z8.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+	! open(unit=30, file="./output/res5.txt", iostat=ios, status="replace", action="write")
 	! if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
 	
 	
-	!u,v,z,gamma,hの初期化
-	call initialize(u,v,z,gamma,h,Nx,Ny)
 
 	!!コリオリfと格子間隔dx,dyの計算
 	call calc_f(f,Ny,f0,Y)
 	call when_l(l,X,Y,Nx,Ny,dx,dy)
 
+	!u,v,z,gamma,hの初期化
+	call initialize(u,v,z,gamma,h,dx,dy,Nx,Ny)
 
 	!メインのループ
-	do times = 1, ntmax
+	do times = 0, ntmax-1
 		!時間計測スタート
 		call system_clock(time_begin_c, CountPerSec, CountMax)
 
@@ -97,12 +101,14 @@ program main
 		cyc = 0
 
 		!収束するまで繰り返し
-		do while(Res>1.e-9)
+		do while(Res>1.e-17)
 			cyc = cyc + 1
+		! do cyc = 1, 350
 			Prev(:,:) = z(:,:)
 
 			!zの計算
-			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
+			! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
+			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res,z(1:Nx,1:Ny),cyc,times)
 			! call smooth(z,Au,Av,Az,b,Nx,Ny)
 			call boundary(z,Nx,Ny,Fu,Fv,f,g,dx,dy)
 
@@ -112,15 +118,15 @@ program main
 
 			call calc_res(z,Au,Av,Az,b,Nx,Ny,Res)
 			
-			if(times==5 .and. cyc<101) then
-				write(30,*) Res
-			end if
+			! if(times==4 .and. cyc<51) then
+			! 	write(30,*) Res
+			! end if
 			write(*,*) 'cyc = ', cyc, Res, difference
 
 		end do
 		! call boundary(z,Nx,Ny)
 
-		! write(*,*) 'times = ', times, sum(z)
+		write(*,*) 'times = ', times, sum(z)
 		u_b(:,:) = u(:,:)
 		v_b(:,:) = v(:,:)
 		call calc_u(u,v_b,z,f,gamma,dt,dx,dy,dtau,g,Nx,Ny)
@@ -130,25 +136,28 @@ program main
 		!時間計測終わり
 		call system_clock(time_end_c)
 		! print *,time_begin_c,time_end_c, CountPerSec,CountMax
-		write(*,*) real(time_end_c - time_begin_c)/CountPerSec,"sec"
+		! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
 
 		!格子中心での値を記録
-		do j = 1, Ny
-			do i = 1, Nx
-				write(10,*) z_frac(u(i-1:i,j))
-				write(11,*) z_frac(v(i,j-1:j))
-			end do
-		end do
-		write(12,*) z(1:Nx,1:Ny)
+		! if(mod(times,3)==0) then
+			! do j = 1, Ny
+			! 	do i = 1, Nx
+			! 		write(10,*) z_frac(u(i-1:i,j))
+			! 		write(11,*) z_frac(v(i,j-1:j))
+			! 	end do
+			! end do
+			write(12,*) z(1:Nx,1:Ny)
+		! endif
 	end do
 
 	stop
 contains
 
-	subroutine initialize(u,v,z,gamma,h,Nx,Ny)
+	subroutine initialize(u,v,z,gamma,h,dx,dy,Nx,Ny)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
+		real(8), intent(in) :: dx, dy
 		real(8), intent(out) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), z(0:Nx+1,0:Ny+1), gamma(0:Nx+1,0:Ny+1), h(0:Nx+1,0:Ny+1)
 
 		integer :: i, j
@@ -156,27 +165,36 @@ contains
 		u(:,:) = 0.d0
 		v(:,:) = 0.d0
 		z(:,:) = 0.d0
+		h(:,:) = 4.d3
 		do j = 1, Ny
 			do i = 1, Nx
-				z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/16.d0**2) !!Gaussian
+				! if(i>Nx-5 .and. i<Nx-1 .and. j>Ny/2-2 .and. j<Ny/2+2) then
+				! 	z(i,j) = 5.d0
+				! end if
+				! z(i,j) = 10*exp(-((i*dx-6.d6)**2+(j*dy-3.d6)**2)/2.d0/16.d4**2) !!Gaussian
+				z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
+				! h(i,j) = 1.d3 - 990.d0*(Nx-i)/Nx
 			end do
 		end do
-		h(:,:) = 1.d3 ![m]
+		! h(:,:) = 1.d3 ![m]
 		gamma(:,:) = 0.d0
 		
 	end subroutine initialize
 
-	recursive subroutine MGCYC(l,k,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nxc,Nyc,Res)
+	recursive subroutine MGCYC(l,k,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nxc,Nyc,Res,origin_zf,cyc,times)
 		implicit none
 
 		integer, intent(in) :: l, k, nu1, nu2, Nx, Ny, Nxc, Nyc
 		real(8), intent(in) :: Au(0:Nx,1:Ny), Av(1:Nx,0:Ny), Az(1:Nx,1:Ny), b(1:Nx,1:Ny), Y
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 		real(8), intent(out) :: Res
+		real(8), intent(in) :: origin_zf(1:Nx,1:Ny)
+		integer, intent(in) :: cyc, times
 
 		integer :: nt, i, j, ntmax
 		real(8) :: df(1:Nx,1:Ny), dc(1:Nxc,1:Nyc), wf(0:Nx+1,0:Ny+1), wc(0:Nxc+1,0:Nyc+1) !defects and errors etc.
 		real(8) :: Auc(0:Nxc,1:Nyc), Avc(1:Nxc,0:Nyc), Azc(1:Nxc,1:Nyc)
+		real(8) :: origin_zc(1:Nxc,1:Nyc)
 
 
 		!Presmoothing
@@ -196,6 +214,7 @@ contains
 		dc(:,:) = 0.d0
 		call Prolongation(Au,Av,Az,Auc,Avc,Azc,Nxc,Nyc)
 		call Prolongation_defect(df,dc,Nxc,Nyc)
+		call Prolongation_defect(origin_zf,origin_zc,Nxc,Nyc)
 
 		!Compute an approximate solution v of the defect equation on k-1
 		wc(:,:) = 0.d0
@@ -204,7 +223,7 @@ contains
 				call smooth(wc,Auc,Avc,Azc,dc,Nxc,Nyc)
 			end do
 		else
-			call MGCYC(l,k-1,wc,Auc,Avc,Azc,dc,nu1,nu2,Y,Nxc,Nyc,Nxc/2,Nyc/2,Res)
+			call MGCYC(l,k-1,wc,Auc,Avc,Azc,dc,nu1,nu2,Y,Nxc,Nyc,Nxc/2,Nyc/2,Res,origin_zc,cyc,times)
 		end if
 
 		!Interpolate the correction
@@ -218,6 +237,29 @@ contains
 		do nt = 1, nu2
 			call smooth(z,Au,Av,Az,b,Nx,Ny)
 		end do
+
+		! if(mod(times,3)==0 .and. cyc==20) then
+		! if(cyc==350) then
+		! 	select case(k)
+		! 	case(1)
+		! 		write(20,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(2)
+		! 		write(21,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(3)
+		! 		write(22,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(4)
+		! 		write(23,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(5)
+		! 		write(24,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(6)
+		! 		write(25,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(7)
+		! 		write(26,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case(8)
+		! 		write(27,*) origin_zf(:,:) + z(1:Nx,1:Ny)
+		! 	case default
+		! 	end select
+		! end if
 
 	end subroutine MGCYC
 
