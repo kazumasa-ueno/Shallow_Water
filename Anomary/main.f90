@@ -24,8 +24,8 @@ program main
 	real(8), parameter :: pi = 4*atan(1.d0)		!円周率
 	real(8), parameter :: f0 = 4*pi/86400			!コリオリパラメータf0
 	real(8), parameter :: X = 6.d7, Y = 3.d7	!領域サイズ
-	real(8), parameter :: dt = 60.d0*4				!時間間隔
-	! real(8), parameter :: dt = 720.d0				!時間間隔
+	! real(8), parameter :: dt = 60.d0*4				!時間間隔
+	real(8), parameter :: dt = 720.d0				!時間間隔
 	real(8), parameter :: dtau = dt/10.d0			!移流計算用小時間間隔
 
 	real(8) :: f(0:Ny+1) 	!コリオリパラメータ
@@ -165,17 +165,18 @@ contains
 		u(:,:) = 0.d0
 		v(:,:) = 0.d0
 		z(:,:) = 0.d0
-		h(:,:) = 4.d3
-		do j = 1, Ny
-			do i = 1, Nx
+		h(:,:) = 120.d0
+		z(:,:) = 0.d0
+		! do j = 1, Ny
+		! 	do i = 1, Nx
 				! if(i>Nx-5 .and. i<Nx-1 .and. j>Ny/2-2 .and. j<Ny/2+2) then
 				! 	z(i,j) = 5.d0
 				! end if
 				! z(i,j) = 10*exp(-((i*dx-6.d6)**2+(j*dy-3.d6)**2)/2.d0/16.d4**2) !!Gaussian
-				z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
+				! z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
 				! h(i,j) = 1.d3 - 990.d0*(Nx-i)/Nx
-			end do
-		end do
+		! 	end do
+		! end do
 		! h(:,:) = 1.d3 ![m]
 		gamma(:,:) = 0.d0
 		

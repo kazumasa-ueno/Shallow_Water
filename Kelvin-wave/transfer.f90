@@ -10,12 +10,12 @@ module transfer_mod
 contains
 
 	! I_k^{k-1}
-	subroutine Prolongation(Auf,Avf,Azf,Auc,Avc,Azc,Nx,Ny)
+	subroutine Prolongation(zf,gammaf,hf,zc,gammac,hc,Nx,Ny)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny !course grid number
-		real(8), intent(in) :: Auf(0:2*Nx,1:2*Ny), Avf(1:2*Nx,0:2*Ny), Azf(1:2*Nx,1:2*Ny)
-		real(8), intent(out) :: Auc(0:Nx,1:Ny), Avc(1:Nx,0:Ny), Azc(1:Nx,1:Ny)
+		real(8), intent(in) :: zf(1:2*Nx,1:2*Ny), gammaf(1:2*Nx,1:2*Ny), hf(1:2*Nx,1:2*Ny)
+		real(8), intent(out) :: zc(0:Nx+1,0:Ny+1), gammac(0:Nx+1,0:Ny+1), hc(0:Nx+1,0:Ny+1)
 
 		integer :: ic, jc, iff, jff
 
@@ -23,16 +23,18 @@ contains
 			do ic = 1, Nx
 				iff = 2*ic
 				jff = 2*jc
-				Auc(ic,jc) = (Auf(iff,jff) + Auf(iff,jff-1))/2.d0
-				Avc(ic,jc) = (Avf(iff,jff) + Avf(iff-1,jff))/2.d0
-				! Azc(ic,jc) = (Azf(iff,jff) + Azf(iff-1,jff) + Azf(iff,jff-1) + Azf(iff-1,jff-1))/4.d0
+				zc(ic,jc) = (zf(iff,jff) + zf(iff-1,jff) + zf(iff,jff-1) + zf(iff-1,jff-1))*0.25d0
+				gammac(ic,jc) = (gammaf(iff,jff) + gammaf(iff-1,jff) + gammaf(iff,jff-1) + gammaf(iff-1,jff-1))*0.25d0
+				hc(ic,jc) = (hf(iff,jff) + hf(iff-1,jff) + hf(iff,jff-1) + hf(iff-1,jff-1))*0.25d0
 			end do
-			Auc(0,jc) = (Auf(0,jff) + Auf(0,jff-1))/2.d0
 		end do
-		do ic = 1, Nx
-			Avc(ic,0) = (Avf(iff,0) + Avf(iff-1,0))/2.d0
-		end do
-		call calc_Az(Auc,Avc,Nx,Ny,Azc)
+
+		call boundary_z(zc,Nx,Ny)
+		call boundary_z(gammac,Nx,Ny) !暫定
+		call boundary_z(hc,Nx,Ny) !暫定
+		! zのboundaryは外側で実装する
+		! gammaのboundaryは外側で実装する
+		! hのboundaryは外側で実装する
 
 	end subroutine Prolongation
 

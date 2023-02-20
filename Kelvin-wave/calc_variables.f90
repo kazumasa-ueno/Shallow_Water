@@ -18,6 +18,8 @@
 !	channel_z:			潮位の時間変化を計算
 !	channel_z_defect:		潮位の時間変化の残差
 !	calc_res:			残差を計算
+
+! calc_tau:     風応力を計算
 !********************************************
 
 module calc_variables_mod
@@ -82,8 +84,8 @@ contains
 
 		do j = 1, Ny-1
 			do i = 1, Nx-1
-				Fu = calc_Fu(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
-				Fv = calc_Fv(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
+				Fu = calc_Fux(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
+				Fv = calc_Fvx(i,j,u_b,v,dt,dx,dy,dtau,Nx,Ny)
 				u(i,j) = (Fu - g*(dt/dx)*(z(i+1,j)-z(i,j)) + f(j)*dt*Fv) / (1+z_frac(gamma(i:i+1,j))*dt)
 			end do
 		end do
@@ -105,8 +107,8 @@ contains
 
 		do j = 1, Ny-1
 			do i = 1, Nx-1
-				Fu = calc_Fu(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
-				Fv = calc_Fv(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
+				Fu = calc_Fuy(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
+				Fv = calc_Fvy(i,j,u,v_b,dt,dx,dy,dtau,Nx,Ny)
 				v(i,j) = (Fv - g*(dt/dy)*(z(i,j+1)-z(i,j)) - f(j)*dt*Fu) / (1+z_frac(gamma(i,j:j+1))*dt)
 			end do
 		end do
@@ -144,7 +146,8 @@ contains
 
 		do j = 1, Ny
 			do i = 0, Nx
-				Au(i,j) = g * (dt/dx)**2 * (z_frac(z(i:i+1,j)) + z_frac(h(i:i+1,j))) / (1 + z_frac(gamma(i:i+1,j))*dt)
+				! Au(i,j) = g * (dt/dx)**2 * (z_frac(z(i:i+1,j)) + z_frac(h(i:i+1,j))) / (1 + z_frac(gamma(i:i+1,j))*dt)
+				Au(i,j) = g * (dt/dx)**2 * (z_frac(h(i:i+1,j))) / (1 + z_frac(gamma(i:i+1,j))*dt)
 			end do
 		end do
 
@@ -161,7 +164,8 @@ contains
 
 		do j = 0, Ny
 			do i = 1, Nx
-				Av(i,j) = g * (dt/dy)**2 * (z_frac(z(i,j:j+1)) + z_frac(h(i,j:j+1))) / (1 + z_frac(gamma(i,j:j+1))*dt)
+				! Av(i,j) = g * (dt/dy)**2 * (z_frac(z(i,j:j+1)) + z_frac(h(i,j:j+1))) / (1 + z_frac(gamma(i,j:j+1))*dt)
+				Av(i,j) = g * (dt/dy)**2 * (z_frac(h(i,j:j+1))) / (1 + z_frac(gamma(i,j:j+1))*dt)
 			end do
 		end do
 
@@ -184,42 +188,69 @@ contains
 
 	end subroutine calc_Az
 
-	subroutine calc_b(u,v,z,gamma,h,f,dt,dx,dy,dtau,Nx,Ny,b)
+	! subroutine calc_b(u,v,z,gamma,h,f,dt,dx,dy,dtau,Nx,Ny,times,b)
+	subroutine calc_b(u,v,z,gamma,h,f,dt,dx,dy,dtau,Nx,Ny,times,b,q)
 		implicit none
 		
-		integer, intent(in) :: Nx, Ny
+		integer, intent(in) :: Nx, Ny, times
 		real(8), intent(in) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), z(0:Nx+1,0:Ny+1), h(0:Nx+1,0:Ny+1), f(0:Ny+1), gamma(0:Nx+1,0:Ny+1)
 		real(8), intent(in) :: dt, dx, dy, dtau
-		real(8), intent(out) :: b(1:Nx,1:Ny)
+		real(8), intent(out) :: b(1:Nx,1:Ny), q(1:Nx,1:Ny)
 
 		integer :: i, j
-		real(8) :: Fu(3), Fv(3)
+		real(8) :: Fu(4), Fv(4), taux
+		
+		real(8), parameter :: D = 80.d0
+		real(8), parameter :: rho = 1.d3
 
 		do j = 1, Ny
 			do i = 1, Nx
-				Fu(1) = calc_Fu(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
-				Fu(2) = calc_Fu(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
-				Fu(3) = calc_Fu(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
-				Fv(1) = calc_Fv(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
-				Fv(2) = calc_Fv(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
-				Fv(3) = calc_Fv(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fu(1) = calc_Fux(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fu(2) = calc_Fux(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fu(3) = calc_Fuy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fu(4) = calc_Fuy(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fv(1) = calc_Fvx(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fv(2) = calc_Fvx(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fv(3) = calc_Fvy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				Fv(4) = calc_Fvy(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
+				taux  = calc_tau(times,dt,dx,dy,i,j,Nx,Ny)
+				! b(i,j) = z(i,j) - (dt/dx) * ( &
+				! & (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
+				! & * (Fu(1)+z_frac(f(j:j+1))*dt*Fv(1)) &
+				! & - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
+				! & * (Fu(2)+z_frac(f(j:j+1))*dt*Fv(2)) ) &
+				! & - (dt/dy) * ( &
+				! & (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
+				! & * (Fv(3)-f(j)*dt*Fu(3)) &
+				! & - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
+				! & * (Fv(4)-f(j-1)*dt*Fu(4)) ) !&
+				! ! & - taux/rho/D*dt
+
 				b(i,j) = z(i,j) - (dt/dx) * ( &
-				& (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
+				& (z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
 				& * (Fu(1)+z_frac(f(j:j+1))*dt*Fv(1)) &
-				& - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
+				& - (z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
 				& * (Fu(2)+z_frac(f(j:j+1))*dt*Fv(2)) ) &
 				& - (dt/dy) * ( &
-				& (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
-				& * (Fv(1)-f(j)*dt*Fu(1)) &
-				& - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
-				& * (Fv(3)-f(j-1)*dt*Fu(3)) )
+				& (z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
+				& * (Fv(3)-f(j)*dt*Fu(3)) &
+				& - (z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
+				& * (Fv(4)-f(j-1)*dt*Fu(4)) ) &
+				& - taux/rho/D*dt
+
+				q(i,j) = Fv(1)
+
+				! write(*,*) "^^"
+				if(i==Nx .and. j==Ny) then
+					write(*,*) taux/rho/D*dt, b(i,j)
+				end if
 			end do
 		end do
 
 	end subroutine calc_b
 
 	! calculate Fu(i+1/2,j)
-	real(8) function calc_Fu(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+	real(8) function calc_Fux(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 		implicit none
 		
 		integer, intent(in) :: Nx, Ny, i, j
@@ -228,26 +259,58 @@ contains
 		integer :: s, smax
 		real(8) :: x, y, u_s, v_s
 
-		if(i==0 .or. i==Nx) then
-			calc_Fu = 0.d0
-		else
-			smax = int(dt/dtau)
-			x = i*dx
-			y = j*dy
-			u_s = u(i,j)
-			v_s = (v(i,j)+v(i,j-1)+v(i+1,j)+v(i+1,j-1))*0.25d0
-			do s = 1, smax
-				x = x - dtau*u_s
-				y = y - dtau*v_s
-				call inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
-			end do
-			calc_Fu = u_s
-		end if
+		! if(i==0 .or. i==Nx) then
+		! 	calc_Fux = 0.d0
+		! else
+		! 	smax = int(dt/dtau)
+		! 	x = i*dx
+		! 	y = j*dy
+		! 	u_s = u(i,j)
+		! 	v_s = (v(i,j)+v(i,j-1)+v(i+1,j)+v(i+1,j-1))*0.25d0
+		! 	do s = 1, smax
+		! 		x = x - dtau*u_s
+		! 		y = y - dtau*v_s
+		! 		call inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
+		! 	end do
+		! 	calc_Fux = u_s
+		! end if
 
-	end function calc_Fu
+		calc_Fux = u(i,j) !!!!!!!
+
+	end function calc_Fux
+
+	! calculate Fu(i,j+1/2)
+	real(8) function calc_Fuy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+		implicit none
+		
+		integer, intent(in) :: Nx, Ny, i, j
+		real(8), intent(in) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), dt, dx, dy, dtau
+
+		integer :: s, smax
+		real(8) :: x, y, u_s, v_s
+
+		! if(j==0 .or. j==Ny) then
+		! 	calc_Fuy = 0.d0
+		! else
+		! 	smax = int(dt/dtau)
+		! 	x = i*dx
+		! 	y = j*dy
+		! 	u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
+		! 	v_s = v(i,j)
+		! 	do s = 1, smax
+		! 		x = x - dtau*u_s
+		! 		y = y - dtau*v_s
+		! 		call inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
+		! 	end do
+		! 	calc_Fuy = u_s
+		! end if
+
+		calc_Fuy = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0 !!!!!!!!
+
+	end function calc_Fuy
 
 	! calculate Fv(i,j+1/2)
-	real(8) function calc_Fv(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+	real(8) function calc_Fvy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 		implicit none
 		
 		integer, intent(in) :: Nx, Ny, i, j
@@ -256,23 +319,55 @@ contains
 		integer :: s, smax
 		real(8) :: x, y, u_s, v_s
 
-		if(j==0 .or. j==Ny) then
-			calc_Fv = 0.d0
-		else
-			smax = int(dt/dtau)
-			x = i*dx
-			y = j*dy
-			u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
-			v_s = v(i,j)
-			do s = 1, smax
-				x = x - dtau*u_s
-				y = y - dtau*v_s
-				call inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
-			end do
-			calc_Fv = v_s
-		end if
+		! if(j==0 .or. j==Ny) then
+		! 	calc_Fvy = 0.d0
+		! else
+		! 	smax = int(dt/dtau)
+		! 	x = i*dx
+		! 	y = j*dy
+		! 	u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
+		! 	v_s = v(i,j)
+		! 	do s = 1, smax
+		! 		x = x - dtau*u_s
+		! 		y = y - dtau*v_s
+		! 		call inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
+		! 	end do
+		! 	calc_Fvy = v_s
+		! end if
 
-	end function calc_Fv
+		calc_Fvy = v(i,j) !!!!!!!!!
+
+	end function calc_Fvy
+
+	! calculate Fv(i+1/2,j)
+	real(8) function calc_Fvx(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+		implicit none
+		
+		integer, intent(in) :: Nx, Ny, i, j
+		real(8), intent(in) :: u(0:Nx,0:Ny+1), v(0:Nx+1,0:Ny), dt, dx, dy, dtau
+
+		integer :: s, smax
+		real(8) :: x, y, u_s, v_s
+
+		! if(i==0 .or. i==Nx) then
+		! 	calc_Fvx = 0.d0
+		! else
+		! 	smax = int(dt/dtau)
+		! 	x = i*dx
+		! 	y = j*dy
+		! 	u_s = u(i,j)
+		! 	v_s = (v(i,j)+v(i,j-1)+v(i+1,j)+v(i+1,j-1))*0.25d0
+		! 	do s = 1, smax
+		! 		x = x - dtau*u_s
+		! 		y = y - dtau*v_s
+		! 		call inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
+		! 	end do
+		! 	calc_Fvx = v_s
+		! end if
+
+		calc_Fvx = (v(i,j)+v(i,j-1)+v(i+1,j)+v(i+1,j-1))*0.25d0
+
+	end function calc_Fvx
 
 	subroutine inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
 		implicit none
@@ -350,5 +445,22 @@ contains
 		Res = (Res**0.5d0)/Nx/Ny
 
 	end subroutine calc_res
+
+	real(8) function calc_tau(times,dt,dx,dy,i,j,Nx,Ny)
+		implicit none
+		
+		integer, intent(in) :: times, i, j, Nx, Ny
+		real(8), intent(in) :: dt, dx, dy
+
+		real(8), parameter :: tau_wwb = 0.02d0
+		real(8), parameter :: Lx = 1000.d3
+		real(8), parameter :: Ly = 1000.d3
+		real(8), parameter :: t0 = 86400*7.d3
+		real(8) :: x0
+		
+		x0 = int(Nx*5.d0/14.d0)
+		calc_tau = tau_wwb * exp(-(dt/t0*times)**2-((j-Ny/2)*dy/Ly)**2-((i-x0)*dx/Lx)**2)
+
+	end function calc_tau
 
 end module calc_variables_mod
