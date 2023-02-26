@@ -207,43 +207,47 @@ contains
 			do i = 1, Nx
 				Fu(1) = calc_Fux(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fu(2) = calc_Fux(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				! Fu(3) = calc_Fux(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				! Fu(4) = calc_Fux(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fu(3) = calc_Fuy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fu(4) = calc_Fuy(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
+				! Fv(1) = calc_Fvy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
+				! Fv(2) = calc_Fvy(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fv(1) = calc_Fvx(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fv(2) = calc_Fvx(i-1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fv(3) = calc_Fvy(i,j,u,v,dt,dx,dy,dtau,Nx,Ny)
 				Fv(4) = calc_Fvy(i,j-1,u,v,dt,dx,dy,dtau,Nx,Ny)
 				taux  = calc_tau(times,dt,dx,dy,i,j,Nx,Ny)
-				! b(i,j) = z(i,j) - (dt/dx) * ( &
-				! & (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
-				! & * (Fu(1)+z_frac(f(j:j+1))*dt*Fv(1)) &
-				! & - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
-				! & * (Fu(2)+z_frac(f(j:j+1))*dt*Fv(2)) ) &
-				! & - (dt/dy) * ( &
-				! & (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
-				! & * (Fv(3)-f(j)*dt*Fu(3)) &
-				! & - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
-				! & * (Fv(4)-f(j-1)*dt*Fu(4)) ) !&
-				! ! & - taux/rho/D*dt
-
 				b(i,j) = z(i,j) - (dt/dx) * ( &
-				& (z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
+				& (z_frac(z(i:i+1,j))+z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
 				& * (Fu(1)+z_frac(f(j:j+1))*dt*Fv(1)) &
-				& - (z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
+				& - (z_frac(z(i-1:i,j))+z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
 				& * (Fu(2)+z_frac(f(j:j+1))*dt*Fv(2)) ) &
 				& - (dt/dy) * ( &
-				& (z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
+				& (z_frac(z(i,j:j+1))+z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
 				& * (Fv(3)-f(j)*dt*Fu(3)) &
-				& - (z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
-				& * (Fv(4)-f(j-1)*dt*Fu(4)) ) &
-				& - taux/rho/D*dt
+				& - (z_frac(z(i,j-1:j))+z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
+				& * (Fv(4)-f(j-1)*dt*Fu(4)) ) !&
+				! & - taux/rho/D*dt
+
+				! b(i,j) = z(i,j) - (dt/dx) * ( &
+				! & (z_frac(h(i:i+1,j))) / (1+z_frac(gamma(i:i+1,j))*dt) &
+				! & * (Fu(1)+z_frac(f(j:j+1))*dt*Fv(1)) &
+				! & - (z_frac(h(i-1:i,j))) / (1+z_frac(gamma(i-1:i,j))*dt) &
+				! & * (Fu(2)+z_frac(f(j:j+1))*dt*Fv(2)) ) &
+				! & - (dt/dy) * ( &
+				! & (z_frac(h(i,j:j+1))) / (1+z_frac(gamma(i,j:j+1))*dt) &
+				! & * (Fv(3)-f(j)*dt*Fu(3)) &
+				! & - (z_frac(h(i,j-1:j))) / (1+z_frac(gamma(i,j-1:j))*dt) &
+				! & * (Fv(4)-f(j-1)*dt*Fu(4)) ) !&
+				! ! & - taux/rho/D*dt
 
 				q(i,j) = Fv(1)
 
 				! write(*,*) "^^"
-				if(i==Nx .and. j==Ny) then
-					write(*,*) taux/rho/D*dt, b(i,j)
-				end if
+				! if(i==Nx .and. j==Ny) then
+				! 	write(*,*) taux/rho/D*dt, b(i,j)
+				! end if
 			end do
 		end do
 
@@ -289,23 +293,23 @@ contains
 		integer :: s, smax
 		real(8) :: x, y, u_s, v_s
 
-		! if(j==0 .or. j==Ny) then
-		! 	calc_Fuy = 0.d0
-		! else
-		! 	smax = int(dt/dtau)
-		! 	x = i*dx
-		! 	y = j*dy
-		! 	u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
-		! 	v_s = v(i,j)
-		! 	do s = 1, smax
-		! 		x = x - dtau*u_s
-		! 		y = y - dtau*v_s
-		! 		call inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
-		! 	end do
-		! 	calc_Fuy = u_s
-		! end if
+		if(j==0 .or. j==Ny) then
+			calc_Fuy = 0.d0
+		else
+			smax = int(dt/dtau)
+			x = i*dx
+			y = j*dy
+			u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
+			v_s = v(i,j)
+			do s = 1, smax
+				x = x - dtau*u_s
+				y = y - dtau*v_s
+				call inner_u(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
+			end do
+			calc_Fuy = u_s
+		end if
 
-		calc_Fuy = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0 !!!!!!!!
+		! calc_Fuy = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0 !!!!!!!!
 
 	end function calc_Fuy
 
@@ -319,23 +323,23 @@ contains
 		integer :: s, smax
 		real(8) :: x, y, u_s, v_s
 
-		! if(j==0 .or. j==Ny) then
-		! 	calc_Fvy = 0.d0
-		! else
-		! 	smax = int(dt/dtau)
-		! 	x = i*dx
-		! 	y = j*dy
-		! 	u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
-		! 	v_s = v(i,j)
-		! 	do s = 1, smax
-		! 		x = x - dtau*u_s
-		! 		y = y - dtau*v_s
-		! 		call inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
-		! 	end do
-		! 	calc_Fvy = v_s
-		! end if
+		if(j==0 .or. j==Ny) then
+			calc_Fvy = 0.d0
+		else
+			smax = int(dt/dtau)
+			x = i*dx
+			y = j*dy
+			u_s = (u(i,j)+u(i,j+1)+u(i-1,j)+u(i-1,j+1))*0.25d0
+			v_s = v(i,j)
+			do s = 1, smax
+				x = x - dtau*u_s
+				y = y - dtau*v_s
+				call inner_v(x,y,u_s,v_s,u,v,dx,dy,Nx,Ny)
+			end do
+			calc_Fvy = v_s
+		end if
 
-		calc_Fvy = v(i,j) !!!!!!!!!
+		! calc_Fvy = v(i,j) !!!!!!!!!
 
 	end function calc_Fvy
 

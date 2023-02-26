@@ -16,10 +16,14 @@ contains
 
 		integer :: i, j
 
-		z(:,0) = z(:,1) - f(1)*dy/g*Fu(:,1)
-		z(:,Ny+1) = z(:,Ny) - f(Ny)*dy/g*Fu(:,2)
-		z(0,:) = z(1,:) + f(:)*dx/g*Fv(1,:)
-		z(Nx+1,:) = z(Nx,:) + f(:)*dx/g*Fv(2,:)
+		z(:,0) = z(:,1)
+		z(:,Ny+1) = z(:,Ny)
+		z(0,:) = z(1,:)
+		z(Nx+1,:) = z(Nx,:)
+		! z(:,0) = z(:,1) - f(1)*dy/g*Fu(:,1)
+		! z(:,Ny+1) = z(:,Ny) - f(Ny)*dy/g*Fu(:,2)
+		! z(0,:) = z(1,:) + f(:)*dx/g*Fv(1,:)
+		! z(Nx+1,:) = z(Nx,:) + f(:)*dx/g*Fv(2,:)
 		
 	end subroutine boundary
 

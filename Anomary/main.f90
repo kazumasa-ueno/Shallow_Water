@@ -15,7 +15,7 @@ program main
 	
 	integer, parameter :: l = 8								!グリッドの深さ
 	! integer, parameter :: Nx = 160, Ny = 80		!グリッド数
-	integer, parameter :: Nx = 512, Ny = 256
+	integer, parameter :: Nx = 1024, Ny = 512
 	! integer, parameter :: Nx = 16, Ny = 8
 	integer, parameter :: ntmax = 100				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
@@ -23,9 +23,9 @@ program main
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
 	real(8), parameter :: pi = 4*atan(1.d0)		!円周率
 	real(8), parameter :: f0 = 4*pi/86400			!コリオリパラメータf0
-	real(8), parameter :: X = 6.d7, Y = 3.d7	!領域サイズ
+	real(8), parameter :: X = 6.d5, Y = 3.d5	!領域サイズ
 	! real(8), parameter :: dt = 60.d0*4				!時間間隔
-	real(8), parameter :: dt = 720.d0				!時間間隔
+	real(8), parameter :: dt = 864.d0				!時間間隔
 	real(8), parameter :: dtau = dt/10.d0			!移流計算用小時間間隔
 
 	real(8) :: f(0:Ny+1) 	!コリオリパラメータ
@@ -139,7 +139,7 @@ program main
 		! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
 
 		!格子中心での値を記録
-		! if(mod(times,3)==0) then
+		! if(mod(times,100)==0) then
 			! do j = 1, Ny
 			! 	do i = 1, Nx
 			! 		write(10,*) z_frac(u(i-1:i,j))
@@ -167,16 +167,16 @@ contains
 		z(:,:) = 0.d0
 		h(:,:) = 120.d0
 		z(:,:) = 0.d0
-		! do j = 1, Ny
-		! 	do i = 1, Nx
+		do j = 1, Ny
+			do i = 1, Nx
 				! if(i>Nx-5 .and. i<Nx-1 .and. j>Ny/2-2 .and. j<Ny/2+2) then
 				! 	z(i,j) = 5.d0
 				! end if
 				! z(i,j) = 10*exp(-((i*dx-6.d6)**2+(j*dy-3.d6)**2)/2.d0/16.d4**2) !!Gaussian
-				! z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
+				z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
 				! h(i,j) = 1.d3 - 990.d0*(Nx-i)/Nx
-		! 	end do
-		! end do
+			end do
+		end do
 		! h(:,:) = 1.d3 ![m]
 		gamma(:,:) = 0.d0
 		
