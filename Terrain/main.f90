@@ -15,8 +15,8 @@ program main
 	
 	integer, parameter :: l = 8								!グリッドの深さ
 	! integer, parameter :: Nx = 160, Ny = 80		!グリッド数
-	integer, parameter :: Nx = 1024, Ny = 256
-	! integer, parameter :: Nx = 16, Ny = 8
+	! integer, parameter :: Nx = 1024, Ny = 256
+	integer, parameter :: Nx = 131072, Ny = 3
 	integer, parameter :: ntmax = 3000				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
 	real(8), parameter :: g = 9.81d0 					!重力定数
@@ -108,7 +108,7 @@ program main
 
 			!zの計算
 			! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res,z(1:Nx,1:Ny),cyc,times)
+			call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny,Res,z(1:Nx,1:Ny),cyc,times)
 			! call smooth(z,Au,Av,Az,b,Nx,Ny)
 			call boundary(z,Nx,Ny,Fu,Fv,f,g,dx,dy)
 

@@ -15,18 +15,18 @@ program main
 	
 	integer, parameter :: l = 6								!グリッドの深さ
 	! integer, parameter :: Nx = 160, Ny = 80		!グリッド数
-	integer, parameter :: Nx = 4096, Ny = 1024
+	integer, parameter :: Nx = 512, Ny = 128
 	! integer, parameter :: Nx = 16, Ny = 8
-	integer, parameter :: ntmax = 100				!時間ステップ
+	integer, parameter :: ntmax = 4000				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
-	real(8), parameter :: g = 9.81d0*0.006d0 	!修正重力定数
+	real(8), parameter :: g = 9.81d0 	!修正重力定数
 	! real(8), parameter :: g = 9.81d0 	!重力定数
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
 	real(8), parameter :: pi = 4*atan(1.d0)		!円周率
 	real(8), parameter :: f0 = 4*pi/86400			!コリオリパラメータf0
 	real(8), parameter :: X = 30000d3, Y = 7500d3	!領域サイズ
 	! real(8), parameter :: dt = 60.d0*4				!時間間隔
-	real(8), parameter :: dt = 864.d0				!時間間隔
+	real(8), parameter :: dt = 216.d0				!時間間隔
 	real(8), parameter :: dtau = dt/10.d0			!移流計算用小時間間隔
 
 	real(8) :: f(0:Ny+1) 	!コリオリパラメータ
@@ -43,12 +43,12 @@ program main
 	!for debug
 	real(8) :: Prev(0:Nx+1,0:Ny+1), tmp((Nx+2)*(Ny+2)) !前の値を格納しておくための配列
 
-	open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
-	open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
-	if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
+	! open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
+	! open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
+	! if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
 	open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
-	! if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
+	if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
 	! open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
 	! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
 	! open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
@@ -95,9 +95,9 @@ program main
 		cyc = 0
 
 		!収束するまで繰り返し
-		do while(Res>1.e-15)
-			cyc = cyc + 1
-		! do cyc = 1, 350
+		! do while(Res>1.e-18 .and. cyc<300)
+		! 	cyc = cyc + 1
+		do cyc = 1, 20
 			Prev(:,:) = z(:,:)
 
 			!zの計算
@@ -166,9 +166,9 @@ contains
 		! 		! if(i>Nx-5 .and. i<Nx-1 .and. j>Ny/2-2 .and. j<Ny/2+2) then
 		! 		! 	z(i,j) = 5.d0
 		! 		! end if
-		! 		! z(i,j) = 10*exp(-((i*dx-6.d6)**2+(j*dy-3.d6)**2)/2.d0/16.d4**2) !!Gaussian
+				! z(i,j) = 10*exp(-((i*dx-6.d6)**2+(j*dy-3.d6)**2)/2.d0/16.d4**2) !!Gaussian
 				! z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
-				z(i,j) = 1*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
+				z(i,j) = 1*exp(-((i-Nx/4)**2+(j-Ny/2)**2)/2.d0/8.d0**2) + 1*exp(-((i-Nx/4*3)**2+(j-Ny/2)**2)/2.d0/8.d0**2) !!Gaussian
 		! 		! h(i,j) = 1.d3 - 990.d0*(Nx-i)/Nx
 			end do
 		end do
@@ -251,8 +251,8 @@ contains
 			call smooth(z,Au,Av,Az,b,Nx,Ny)
 		end do
 
-		! if(mod(times,3)==0 .and. cyc==20) then
-		! if(cyc==350) then
+		! if(mod(times,10)==0 .and. cyc==20) then
+		! ! if(cyc==350) then
 		! 	select case(k)
 		! 	case(1)
 		! 		write(20,*) zf(:,:) + z(1:Nx,1:Ny)

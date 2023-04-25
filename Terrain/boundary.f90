@@ -7,10 +7,11 @@ module boundary_mod
 	
 contains
 
-	subroutine boundary_z(z,Nx,Ny)
+	subroutine boundary(z,Nx,Ny,Fu,Fv,f,g,dx,dy)
 		implicit none
 
 		integer, intent(in) :: Nx, Ny
+		real(8), intent(in) :: Fu(:,:), Fv(:,:), f(0:Ny+1), g, dx, dy
 		real(8), intent(inout) :: z(0:Nx+1,0:Ny+1)
 
 		integer :: i, j
@@ -24,7 +25,7 @@ contains
 		! z(0,:) = z(1,:) + f(:)*dx/g*Fv(1,:)
 		! z(Nx+1,:) = z(Nx,:) + f(:)*dx/g*Fv(2,:)
 		
-	end subroutine boundary_z
+	end subroutine boundary
 
 
 	subroutine boundary_defect(d,Nx,Ny)
