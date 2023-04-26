@@ -33,13 +33,14 @@ contains
 
 		u_b(:) = u(:)
 
-		do i = 1, Nx
-			Fu = calc_Fu(i,u_b,dt,dx,dtau,Nx)
-			Fv = calc_Fv(i,u_b,v,dt,dx,dtau,Nx)
-			u(i) = (Fu - g*(dt/dx)*(z(i+1)-z(i)) + f*dt*Fv) / (1+z_frac(gamma(i:i+1))*dt)
+		do i = 0, Nx
+			Fu = calc_Fuu(i,u_b,dt,dx,dtau,Nx)
+			Fv = calc_Fvu(i,u_b,v,dt,dx,dtau,Nx)
+			u(i) = (Fu - g*(dt/dx)*(z(cir_i(i+1,Nx))-z(cir_i(i,Nx))) &
+			& + f*dt*Fv) / (1+(gamma(cir_i(i,Nx))+gamma(cir_i(i+1,Nx)))*0.5d0*dt)
 		end do
 
-		call boundary_u(u,Nx,times)      
+		! call boundary_u(u,Nx,times)      
 
 	end subroutine calc_u
 
@@ -56,9 +57,9 @@ contains
 		v_b(:) = v(:)
 
 		do i = 0, Nx+1
-			Fu = calc_Fu(i,u,dt,dx,dtau,Nx)
-			Fv = calc_Fv(i,u,v,dt,dx,dtau,Nx)
-			v(i) = (Fv - f*dt*Fu) / (1+gamma(i)*dt)
+			Fu = calc_Fuc(i,u,dt,dx,dtau,Nx)
+			Fv = calc_Fvc(i,u,v,dt,dx,dtau,Nx)
+			v(i) = (Fv - f*dt*Fu) / (1+gamma(cir_i(i,Nx))*dt)
 		end do
 
 		! call boundary_v(v,Nx)
@@ -120,10 +121,10 @@ contains
 		real(8) :: Fu(3), Fv(3)
 
 		do i = 1, Nx
-			Fu(1) = calc_Fu(i,u,dt,dx,dtau,Nx)
-			Fu(2) = calc_Fu(i-1,u,dt,dx,dtau,Nx)
-			Fv(1) = calc_Fv(i,u,v,dt,dx,dtau,Nx)
-			Fv(2) = calc_Fv(i-1,u,v,dt,dx,dtau,Nx)
+			Fu(1) = calc_Fuu(i,u,dt,dx,dtau,Nx)
+			Fu(2) = calc_Fuu(i-1,u,dt,dx,dtau,Nx)
+			Fv(1) = calc_Fvu(i,u,v,dt,dx,dtau,Nx)
+			Fv(2) = calc_Fvu(i-1,u,v,dt,dx,dtau,Nx)
 			b(i) = z(i) - (dt/dx) * ( &
 			& (z_frac(z(i:i+1))+z_frac(h(i:i+1))) / (1+z_frac(gamma(i:i+1))*dt) &
 			& * (Fu(1)+f*dt*Fv(1)) &
@@ -137,8 +138,36 @@ contains
 	!!!!!!逆流の時は修正必要!!!!!!!!!
 	!----------------------------!
 
-	! calculate Fu(i+1/2)
-	real(8) function calc_Fu(i,u,dt,dx,dtau,Nx)
+	! calculate Fu(i+1/2) actuarlly(u(i))
+	! 0 <= i <= Nx
+	real(8) function calc_Fuu(i,u,dt,dx,dtau,Nx)
+		implicit none
+		
+		integer, intent(in) :: Nx, i
+		real(8), intent(in) :: u(0:Nx), dt, dx, dtau
+
+		integer :: s, smax
+		real(8) :: x, u_s
+
+		smax = int(dt/dtau)
+		x = (i+0.5d0)*dx
+		u_s = u(cir_i(i,Nx))
+		do s = 1, smax
+			x = x - dtau*u_s
+			if(x<0) then
+				u_s = u_upstream
+				exit
+			end if
+			call inner_u(x,u_s,u,dx,Nx)
+		end do
+		calc_Fuu = u_s
+
+		! calc_Fuu = u(i)
+	end function calc_Fuu
+
+	! calculate Fu(i) actually(u(i-1/2))
+	! 1 <= i <= Nx
+	real(8) function calc_Fuc(i,u,dt,dx,dtau,Nx)
 		implicit none
 		
 		integer, intent(in) :: Nx, i
@@ -149,7 +178,8 @@ contains
 
 		smax = int(dt/dtau)
 		x = i*dx
-		u_s = u(i)
+		! u_s = z_frac(u(i-1:i))
+		u_s = (u(cir_i(i-1,Nx))+cir_i(i,Nx))*0.5d0
 		do s = 1, smax
 			x = x - dtau*u_s
 			if(x<0) then
@@ -158,13 +188,14 @@ contains
 			end if
 			call inner_u(x,u_s,u,dx,Nx)
 		end do
-		calc_Fu = u_s
+		calc_Fuc = u_s
 
-		! calc_Fu = u(i)
-	end function calc_Fu
+		! calc_Fuc = u(i)
+	end function calc_Fuc
 
 	! calculate Fv(i)
-	real(8) function calc_Fv(i,u,v,dt,dx,dtau,Nx)
+	! 1 <= i <= Nx
+	real(8) function calc_Fvc(i,u,v,dt,dx,dtau,Nx)
 		implicit none
 		
 		integer, intent(in) :: Nx, i
@@ -175,7 +206,7 @@ contains
 
 		smax = int(dt/dtau)
 		x = i*dx
-		u_s = (u(i)+u(i-1))*0.5d0
+		u_s = (u(cir_i(i,Nx))+u(cir_i(i-1,Nx)))*0.5d0
 		v_s = v(i)
 		do s = 1, smax
 			x = x - dtau*u_s
@@ -183,12 +214,42 @@ contains
 				v_s = v_upstream
 				exit
 			endif
+			call inner_u(x,u_s,u,dx,Nx)
 			call inner_v(x,v_s,u,v,dx,Nx)
 		end do
-		calc_Fv = v_s
+		calc_Fvc = v_s
 
-		! calc_Fv = v(i)
-	end function calc_Fv
+		! calc_Fvc = v(i)
+	end function calc_Fvc
+
+	! calculate Fv(i+1/2)
+	! 0 <= i <= Nx
+	real(8) function calc_Fvu(i,u,v,dt,dx,dtau,Nx)
+		implicit none
+		
+		integer, intent(in) :: Nx, i
+		real(8), intent(in) :: u(0:Nx), v(0:Nx+1), dt, dx, dtau
+
+		integer :: s, smax
+		real(8) :: x, u_s, v_s
+
+		smax = int(dt/dtau)
+		x = (i+0.5d0)*dx
+		u_s = u(cir_i(i,Nx))
+		v_s = (v(i)+v(i+1))*0.5d0
+		do s = 1, smax
+			x = x - dtau*u_s
+			if(x<0) then
+				v_s = v_upstream
+				exit
+			endif
+			call inner_u(x,u_s,u,dx,Nx)
+			call inner_v(x,v_s,u,v,dx,Nx)
+		end do
+		calc_Fvu = v_s
+
+		! calc_Fvu = v(i)
+	end function calc_Fvu
 
 	subroutine inner_u(x,u_s,u,dx,Nx)
 		implicit none
@@ -199,9 +260,9 @@ contains
 		integer :: iu, iv
 		real(8) :: pu, xv, yv, pv, qv
 
-		iu = int(x/dx)
-		pu = x/dx - iu
-		u_s = (1-pu)*u(iu) + pu*u(iu+1)
+		iu = int(x/dx-0.5d0)
+		pu = x/dx - 0.5d0 - iu
+		u_s = (1-pu)*u(cir_i(iu,Nx)) + pu*u(cir_i(iu+1,Nx))
 
 	end subroutine inner_u
 
@@ -216,7 +277,7 @@ contains
 
 		iv = int(x/dx)
 		pv = x/dx - iv
-		v_s = (1-pv)*v(iv) + pv*v(iv+1)
+		v_s = (1-pv)*v(cir_i(iv,Nx)) + pv*v(cir_i(iv+1,Nx))
 
 	end subroutine inner_v
 

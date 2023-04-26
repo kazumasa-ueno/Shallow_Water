@@ -5,6 +5,7 @@
 !********************************************
 
 program main
+	use constant
 	use boundary_mod
 	use calc_variables_mod
 	use transfer_mod
@@ -13,15 +14,15 @@ program main
 
 	integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
 	
-	integer, parameter :: l = 2								!グリッドの深さ
-	integer, parameter :: Nx = 64
-	integer, parameter :: ntmax = 5000				!時間ステップ
+	integer, parameter :: l = 3								!グリッドの深さ
+	integer, parameter :: Nx = 512
+	integer, parameter :: ntmax = 30000				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
 	real(8), parameter :: g = 9.81d0 					!重力定数
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
 	real(8), parameter :: pi = 4*atan(1.d0)		!円周率
 	real(8), parameter :: f0 = 4*pi/86400			!コリオリパラメータf0
-	real(8), parameter :: X = 1.d8						!領域サイズ
+	real(8), parameter :: X = 2.d6						!領域サイズ
 	! real(8), parameter :: dt = 60.d0*4				!時間間隔
 	real(8), parameter :: dt = 90.d0					!時間間隔
 	real(8), parameter :: dtau = dt/10.d0			!移流計算用小時間間隔
@@ -70,6 +71,7 @@ program main
 	!!コリオリパラメータfと格子間隔dxの計算
 	f = f0
 	dx = X/Nx
+	write(*,*) dx
 
 	!u,v,z,gamma,hの初期化
 	call initialize(u,v,z,gamma,h,dx,Nx)
@@ -84,15 +86,6 @@ program main
 		call calc_Az(Au,Nx,Az)
 		call calc_b(u,v,z,gamma,h,f,dt,dx,dtau,Nx,b)
 		
-		! do j = 1, Ny
-		! 	Fv(1,j) = calc_Fv(1,j,u,v,dt,dx,dy,dtau,Nx,Ny)
-		! 	Fv(2,j) = calc_Fv(Nx,j,u,v,dt,dx,dy,dtau,Nx,Ny)
-		! end do
-		! do i = 1, Nx
-		! 	Fu(i,1) = calc_Fu(i,1,u,v,dt,dx,dy,dtau,Nx,Ny)
-		! 	Fu(i,2) = calc_Fu(i,Ny,u,v,dt,dx,dy,dtau,Nx,Ny)
-		! end do
-		
 		difference = 100 !大きな値にセット
 		Res = 100 !同上
 		cyc = 0
@@ -100,15 +93,18 @@ program main
 		!収束するまで繰り返し
 		! do while(Res>1.e-17)
 		! 	cyc = cyc + 1
-		do cyc = 1, 200
+		do cyc = 1, 500
 			Prev(:) = z(:)
 			
 			!zの計算
 			! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-			! call MGCYC(l,l,z,Au,Az,b,nu1,nu2,Nx,Nx/2,Res,z(1:Nx),cyc,times)
-			call smooth(z,Au,Az,b,Nx)
-			Fu_tmp = calc_Fu(0,u,dt,dx,dtau,Nx)
-			Fv_tmp = calc_Fv(0,u,v,dt,dx,dtau,Nx)
+			call MGCYC(l,l,z,Au,Az,b,nu1,nu2,Nx,Nx/2,Res,z(1:Nx),cyc,times)
+			! call smooth(z,Au,Az,b,Nx)
+			! if(times==1) then
+			! 	write(12,*) z(1:Nx)
+			! endif
+			Fu_tmp = calc_Fuu(0,u,dt,dx,dtau,Nx)
+			Fv_tmp = calc_Fvu(0,u,v,dt,dx,dtau,Nx)
 			call boundary(z,Nx,dt,dx,gamma,f,g,Fu_tmp,Fv_tmp,u)
 			
 			tmp(:) = reshape(Prev(:) - z(:),(/(Nx+2)/))
@@ -131,6 +127,8 @@ program main
 		call calc_v(u_b,v,f,gamma,dt,dx,dtau,Nx)
 		call calc_gamma(u,v,z,h,gamma,g,Cz,Nx)
 		
+		! write(12,*) u(1:Nx)
+
 		!時間計測終わり
 		call system_clock(time_end_c)
 		! print *,time_begin_c,time_end_c, CountPerSec,CountMax
@@ -144,7 +142,7 @@ program main
 			! 		write(11,*) z_frac(v(i,j-1:j))
 			! 	end do
 			! end do
-			write(12,*) Az(1:Nx)
+			write(12,*) z(0:Nx)
 		endif
 	end do
 
@@ -160,23 +158,14 @@ contains
 
 		integer :: i, j
 
-		u(:) = 0.5d0
+		u(:) = u_upstream
 		v(:) = 0.d0
 		z(:) = 0.d0
-		h(:) = 120.d0
-		z(:) = 0.d0
-		! do j = 1, Ny
-		! 	do i = 1, Nx
-				! if(i>Nx-5 .and. i<Nx-1 .and. j>Ny/2-2 .and. j<Ny/2+2) then
-				! 	z(i,j) = 5.d0
-				! end if
-				! z(i,j) = 10*exp(-((i*dx-6.d6)**2+(j*dy-3.d6)**2)/2.d0/16.d4**2) !!Gaussian
-				! z(i,j) = 10*exp(-((i-Nx/2)**2+(j-Ny/2)**2)/2.d0/2.d0**2) !!Gaussian
-				! z(i,j) = 1*exp(-((i-Nx/4)**2+(j-Ny/2)**2)/2.d0/16.d0**2) + 1*exp(-((i-Nx/4*3)**2+(j-Ny/2)**2)/2.d0/16.d0**2)
-				! h(i,j) = 1.d3 - 990.d0*(Nx-i)/Nx
-		! 	end do
-		! end do
-		! h(:,:) = 1.d3 ![m]
+		h(:) = 0.d0
+		z(:) = 0.d0 
+		do i = 0, Nx+1
+			h(i) = 1.d3 - 10.d0*(Nx-i)/Nx
+		end do
 		gamma(:) = 0.d0
 		call boundary_u(u,Nx,1)
 		
