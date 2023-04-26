@@ -1,12 +1,9 @@
 !********************************************
 ! 色々な変数を計算するためのモジュール
-!	when_l: 			dx,dyを計算
-!	calc_f: 			コリオリパラメータを計算
 !	calc_u: 			zの値からuを計算
 !	calc_v: 			zの値からvを計算
 !	calc_gamma: 			zの値からgammaを計算
 !	calc_Au:			Auの値を計算
-!	calc_Av:			Avの値を計算
 !	calc_Az:			Azの値を計算
 !	calc_b:				bの値を計算
 !	calc_Fu:			移流元のuの値を計算
@@ -14,45 +11,43 @@
 !	inner_u:			uの内装を計算
 !	inner_v:			vの内装を計算
 !	z_frac:				分数インデックスでの値を計算
-!	calc_channel:			湾幅のインデックスを計算
-!	channel_z:			潮位の時間変化を計算
-!	channel_z_defect:		潮位の時間変化の残差
 !	calc_res:			残差を計算
 !********************************************
 
 module calc_variables_mod
+	use constant
 	use boundary_mod
 	implicit none
 	
 contains
 
-	subroutine calc_u(u,v,z,f,gamma,dt,dx,dtau,g,Nx)
+	subroutine calc_u(u,v,z,f,gamma,dt,dx,dtau,g,times,Nx)
 		implicit none
 		
-		integer, intent(in) :: Nx
+		integer, intent(in) :: Nx, times
 		real(8), intent(in) :: v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), f, dt, dx, dtau, g
 		real(8), intent(inout) :: u(0:Nx)
 
-		integer :: i, j
+		integer :: i
 		real(8) :: Fu, Fv, u_b(0:Nx) !u before update
 
 		u_b(:) = u(:)
 
-		do i = 1, Nx-1
+		do i = 1, Nx
 			Fu = calc_Fu(i,u_b,dt,dx,dtau,Nx)
 			Fv = calc_Fv(i,u_b,v,dt,dx,dtau,Nx)
 			u(i) = (Fu - g*(dt/dx)*(z(i+1)-z(i)) + f*dt*Fv) / (1+z_frac(gamma(i:i+1))*dt)
 		end do
 
-		call boundary_u(u,Nx)
+		call boundary_u(u,Nx,times)      
 
 	end subroutine calc_u
 
-	subroutine calc_v(u,v,z,f,gamma,dt,dx,dtau,g,Nx)
+	subroutine calc_v(u,v,f,gamma,dt,dx,dtau,Nx)
 		implicit none
 
 		integer, intent(in) :: Nx
-		real(8), intent(in) :: u(0:Nx), z(0:Nx+1), gamma(0:Nx+1), f, dt, dx, dtau, g
+		real(8), intent(in) :: u(0:Nx), gamma(0:Nx+1), f, dt, dx, dtau
 		real(8), intent(inout) :: v(0:Nx+1)
 
 		integer :: i
@@ -60,13 +55,13 @@ contains
 
 		v_b(:) = v(:)
 
-		do i = 1, Nx-1
+		do i = 0, Nx+1
 			Fu = calc_Fu(i,u,dt,dx,dtau,Nx)
 			Fv = calc_Fv(i,u,v,dt,dx,dtau,Nx)
 			v(i) = (Fv - f*dt*Fu) / (1+gamma(i)*dt)
 		end do
 
-		call boundary(v,Nx)
+		! call boundary_v(v,Nx)
 		
 	end subroutine calc_v
 
@@ -138,6 +133,10 @@ contains
 
 	end subroutine calc_b
 
+	!----------------------------!
+	!!!!!!逆流の時は修正必要!!!!!!!!!
+	!----------------------------!
+
 	! calculate Fu(i+1/2)
 	real(8) function calc_Fu(i,u,dt,dx,dtau,Nx)
 		implicit none
@@ -148,16 +147,20 @@ contains
 		integer :: s, smax
 		real(8) :: x, u_s
 
-		! 周期境界
 		smax = int(dt/dtau)
 		x = i*dx
 		u_s = u(i)
 		do s = 1, smax
 			x = x - dtau*u_s
+			if(x<0) then
+				u_s = u_upstream
+				exit
+			end if
 			call inner_u(x,u_s,u,dx,Nx)
 		end do
 		calc_Fu = u_s
 
+		! calc_Fu = u(i)
 	end function calc_Fu
 
 	! calculate Fv(i)
@@ -176,10 +179,15 @@ contains
 		v_s = v(i)
 		do s = 1, smax
 			x = x - dtau*u_s
+			if(x<0) then
+				v_s = v_upstream
+				exit
+			endif
 			call inner_v(x,v_s,u,v,dx,Nx)
 		end do
 		calc_Fv = v_s
 
+		! calc_Fv = v(i)
 	end function calc_Fv
 
 	subroutine inner_u(x,u_s,u,dx,Nx)

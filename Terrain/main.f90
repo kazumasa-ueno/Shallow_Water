@@ -13,15 +13,15 @@ program main
 
 	integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
 	
-	integer, parameter :: l = 1								!グリッドの深さ
-	integer, parameter :: Nx = 131072
-	integer, parameter :: ntmax = 3000				!時間ステップ
+	integer, parameter :: l = 2								!グリッドの深さ
+	integer, parameter :: Nx = 64
+	integer, parameter :: ntmax = 5000				!時間ステップ
 	integer, parameter :: nu1 = 2, nu2 = 1		!マルチグリッドサイクル内のsmooth回数
 	real(8), parameter :: g = 9.81d0 					!重力定数
 	real(8), parameter :: Cz = 80.d0					!Chezy 摩擦係数
 	real(8), parameter :: pi = 4*atan(1.d0)		!円周率
 	real(8), parameter :: f0 = 4*pi/86400			!コリオリパラメータf0
-	real(8), parameter :: X = 6.d7						!領域サイズ
+	real(8), parameter :: X = 1.d8						!領域サイズ
 	! real(8), parameter :: dt = 60.d0*4				!時間間隔
 	real(8), parameter :: dt = 90.d0					!時間間隔
 	real(8), parameter :: dtau = dt/10.d0			!移流計算用小時間間隔
@@ -36,6 +36,7 @@ program main
 	integer :: times, cyc !時間ループ用と収束までの繰り返し用
 	integer :: ios !ファイル開く用
 	integer :: i, j !空間ループ用
+	real(8) :: Fu_tmp, Fv_tmp
 
 	!for debug
 	real(8) :: Prev(0:Nx+1), tmp(Nx+2) !前の値を格納しておくための配列
@@ -104,10 +105,11 @@ program main
 			
 			!zの計算
 			! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-			call MGCYC(l,l,z,Au,Az,b,nu1,nu2,Nx,Nx/2,Res,z(1:Nx),cyc,times)
-			! call smooth(z,Au,Av,Az,b,Nx,Ny)
-			call boundary(z,Nx)
-			
+			! call MGCYC(l,l,z,Au,Az,b,nu1,nu2,Nx,Nx/2,Res,z(1:Nx),cyc,times)
+			call smooth(z,Au,Az,b,Nx)
+			Fu_tmp = calc_Fu(0,u,dt,dx,dtau,Nx)
+			Fv_tmp = calc_Fv(0,u,v,dt,dx,dtau,Nx)
+			call boundary(z,Nx,dt,dx,gamma,f,g,Fu_tmp,Fv_tmp,u)
 			
 			tmp(:) = reshape(Prev(:) - z(:),(/(Nx+2)/))
 			difference = dot_product(tmp,tmp)
@@ -117,7 +119,7 @@ program main
 			! if(times==4 .and. cyc<51) then
 			! 	write(30,*) Res
 			! end if
-			write(*,*) 'cyc = ', cyc, Res, difference
+			! write(*,*) 'cyc = ', cyc, Res, difference
 			
 		end do
 		! call boundary(z,Nx,Ny)
@@ -125,8 +127,8 @@ program main
 		write(*,*) 'times = ', times, sum(z)
 		u_b(:) = u(:)
 		v_b(:) = v(:)
-		call calc_u(u,v_b,z,f,gamma,dt,dx,dtau,g,Nx)
-		call calc_v(u_b,v,z,f,gamma,dt,dx,dtau,g,Nx)
+		call calc_u(u,v_b,z,f,gamma,dt,dx,dtau,g,times,Nx)
+		call calc_v(u_b,v,f,gamma,dt,dx,dtau,Nx)
 		call calc_gamma(u,v,z,h,gamma,g,Cz,Nx)
 		
 		!時間計測終わり
@@ -142,7 +144,7 @@ program main
 			! 		write(11,*) z_frac(v(i,j-1:j))
 			! 	end do
 			! end do
-			write(12,*) z(1:Nx)
+			write(12,*) Az(1:Nx)
 		endif
 	end do
 
@@ -158,7 +160,7 @@ contains
 
 		integer :: i, j
 
-		u(:) = 1.d0
+		u(:) = 0.5d0
 		v(:) = 0.d0
 		z(:) = 0.d0
 		h(:) = 120.d0
@@ -176,6 +178,7 @@ contains
 		! end do
 		! h(:,:) = 1.d3 ![m]
 		gamma(:) = 0.d0
+		call boundary_u(u,Nx,1)
 		
 	end subroutine initialize
 
