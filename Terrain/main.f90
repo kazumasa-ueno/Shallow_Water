@@ -78,12 +78,8 @@ program main
       Prev(:) = z(:)
       
       !zの計算
-      ! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
       call MGCYC(l,z,Au,Az,b,Nx,Nx/2,Res,z(1:Nx),cyc,times)
       ! call smooth(z,Au,Az,b,Nx)
-      ! if(times==1) then
-      !   write(12,*) z(1:Nx)
-      ! endif
       Fu_tmp = calc_Fuu(0,u,dt,dx,dtau,Nx)
       Fv_tmp = calc_Fvu(0,u,v,dt,dx,dtau,Nx)
       call boundary(z,Nx,dt,dx,gamma,Fu_tmp,Fv_tmp,u)
@@ -106,7 +102,7 @@ program main
     v_b(:) = v(:)
     call calc_u(u,v_b,z,gamma,times,Nx)
     call calc_v(u_b,v,gamma,Nx)
-    call calc_gamma(u,v,z,h,gamma,g,Cz,Nx)
+    call calc_gamma(u,v,z,h,gamma,Nx)
     
 
     !時間計測終わり

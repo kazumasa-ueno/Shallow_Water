@@ -66,14 +66,14 @@ contains
     
   end subroutine calc_v
 
-  subroutine calc_gamma(u,v,z,h,gamma,g,Cz,Nx)
+  subroutine calc_gamma(u,v,z,h,gamma,Nx)
     implicit none
 
     integer, intent(in) :: Nx
-    real(8), intent(in) :: u(0:Nx), v(0:Nx+1), z(0:Nx+1), h(0:Nx+1), g, Cz
+    real(8), intent(in) :: u(0:Nx), v(0:Nx+1), z(0:Nx+1), h(0:Nx+1)
     real(8), intent(out) :: gamma(0:Nx+1)
 
-    integer :: i, j
+    integer :: i
 
     gamma = 0.d0
     
