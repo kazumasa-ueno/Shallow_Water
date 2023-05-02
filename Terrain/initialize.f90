@@ -17,7 +17,7 @@ contains
     h(:) = 0.d0
     z(:) = 0.d0 
     do i = 0, Nx+1
-      h(i) = 1.d3 + 10.d0*sin((Nx-i)/Nx*2*pi)
+      h(i) = 1.d3 + 10.d0*sin((Nx-i+1)*2.d0*pi/Nx)
     end do
     gamma(:) = 0.d0
     call boundary_u(u,Nx,1)

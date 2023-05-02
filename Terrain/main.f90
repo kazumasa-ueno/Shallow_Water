@@ -32,8 +32,8 @@ program main
   ! if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
   ! open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
   ! if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
-  ! open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
-  ! if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
+  open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
+  if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
   ! open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
   ! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
   ! open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
@@ -111,9 +111,9 @@ program main
     ! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
     
     !格子中心での値を記録
-    ! if(mod(times,10)==0) then
-      ! write(12,*) z(0:Nx)
-    ! endif
+    if(mod(times,10)==0) then
+      write(12,*) z(0:Nx)
+    endif
   end do
 
   stop

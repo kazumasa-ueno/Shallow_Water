@@ -154,10 +154,10 @@ contains
     u_s = u(cir_i(i,Nx))
     do s = 1, smax
       x = x - dtau*u_s
-      if(x<0) then
-        u_s = u_upstream
-        exit
-      end if
+      ! if(x<0) then
+      !   u_s = u_upstream
+      !   exit
+      ! end if
       call inner_u(x,u_s,u,dx,Nx)
     end do
     calc_Fuu = u_s
@@ -182,10 +182,10 @@ contains
     u_s = (u(cir_i(i-1,Nx))+cir_i(i,Nx))*0.5d0
     do s = 1, smax
       x = x - dtau*u_s
-      if(x<0) then
-        u_s = u_upstream
-        exit
-      end if
+      ! if(x<0) then
+      !   u_s = u_upstream
+      !   exit
+      ! end if
       call inner_u(x,u_s,u,dx,Nx)
     end do
     calc_Fuc = u_s
@@ -210,10 +210,10 @@ contains
     v_s = v(i)
     do s = 1, smax
       x = x - dtau*u_s
-      if(x<0) then
-        v_s = v_upstream
-        exit
-      endif
+      ! if(x<0) then
+      !   v_s = v_upstream
+      !   exit
+      ! endif
       call inner_u(x,u_s,u,dx,Nx)
       call inner_v(x,v_s,u,v,dx,Nx)
     end do
@@ -239,10 +239,10 @@ contains
     v_s = (v(i)+v(i+1))*0.5d0
     do s = 1, smax
       x = x - dtau*u_s
-      if(x<0) then
-        v_s = v_upstream
-        exit
-      endif
+      ! if(x<0) then
+      !   v_s = v_upstream
+      !   exit
+      ! endif
       call inner_u(x,u_s,u,dx,Nx)
       call inner_v(x,v_s,u,v,dx,Nx)
     end do
