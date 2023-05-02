@@ -14,10 +14,10 @@ contains
     u(:) = u_upstream
     v(:) = 0.d0
     z(:) = 0.d0
-    h(:) = 0.d0
+    h(:) = 1.d0
     z(:) = 0.d0 
-    do i = 0, Nx+1
-      h(i) = 1.d3 + 10.d0*sin((Nx-i+1)*2.d0*pi/Nx)
+    do i = Nx/5*2, Nx/5*3
+      h(i) = 1.d3 + 10.d0
     end do
     gamma(:) = 0.d0
     call boundary_u(u,Nx,1)

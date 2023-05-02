@@ -9,7 +9,7 @@ x = np.linspace(0,2e6,1025)
 fig,ax = plt.subplots()
 line, = ax.plot(x,z[0])
 title = ax.set_title("num = {}".format(0))
-ax.set_ylim(-1,1)
+ax.set_ylim(-10,10)
 
 def update(frame):
     line.set_ydata(z[frame])

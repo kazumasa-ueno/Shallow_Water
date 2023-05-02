@@ -111,7 +111,7 @@ program main
     ! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
     
     !格子中心での値を記録
-    if(mod(times,10)==0) then
+    if(mod(times,100)==0) then
       write(12,*) z(0:Nx)
     endif
   end do

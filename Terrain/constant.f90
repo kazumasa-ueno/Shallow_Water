@@ -2,7 +2,7 @@ module constant
 
   integer, parameter :: l = 3                !グリッドの深さ
   integer, parameter :: Nx = 1024
-  integer, parameter :: ntmax = 3000        !時間ステップ
+  integer, parameter :: ntmax = 30000        !時間ステップ
   integer, parameter :: nu1 = 2, nu2 = 1    !マルチグリッドサイクル内のsmooth回数
   real(8), parameter :: X = 2.d6            !領域サイズ
   real(8), parameter :: u_upstream = 0.5d0
