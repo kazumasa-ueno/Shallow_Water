@@ -21,11 +21,11 @@ module calc_variables_mod
   
 contains
 
-  subroutine calc_u(u,v,z,f,gamma,dt,dx,dtau,g,times,Nx)
+  subroutine calc_u(u,v,z,f,gamma,dx,times,Nx)
     implicit none
     
     integer, intent(in) :: Nx, times
-    real(8), intent(in) :: v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), f, dt, dx, dtau, g
+    real(8), intent(in) :: v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), f, dx
     real(8), intent(inout) :: u(0:Nx)
 
     integer :: i
@@ -44,11 +44,11 @@ contains
 
   end subroutine calc_u
 
-  subroutine calc_v(u,v,f,gamma,dt,dx,dtau,Nx)
+  subroutine calc_v(u,v,f,gamma,dx,Nx)
     implicit none
 
     integer, intent(in) :: Nx
-    real(8), intent(in) :: u(0:Nx), gamma(0:Nx+1), f, dt, dx, dtau
+    real(8), intent(in) :: u(0:Nx), gamma(0:Nx+1), f, dx
     real(8), intent(inout) :: v(0:Nx+1)
 
     integer :: i

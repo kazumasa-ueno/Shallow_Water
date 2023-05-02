@@ -9,34 +9,20 @@ program main
   use boundary_mod
   use calc_variables_mod
   use transfer_mod
+  use initialization
   use,intrinsic :: iso_fortran_env
   implicit none
 
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
   
-  integer, parameter :: l = 3                !グリッドの深さ
-  integer, parameter :: Nx = 512
-  integer, parameter :: ntmax = 30000        !時間ステップ
-  integer, parameter :: nu1 = 2, nu2 = 1    !マルチグリッドサイクル内のsmooth回数
-  real(8), parameter :: g = 9.81d0           !重力定数
-  real(8), parameter :: Cz = 80.d0          !Chezy 摩擦係数
-  real(8), parameter :: pi = 4*atan(1.d0)    !円周率
-  real(8), parameter :: f0 = 4*pi/86400      !コリオリパラメータf0
-  real(8), parameter :: X = 2.d6            !領域サイズ
-  ! real(8), parameter :: dt = 60.d0*4        !時間間隔
-  real(8), parameter :: dt = 90.d0          !時間間隔
-  real(8), parameter :: dtau = dt/10.d0      !移流計算用小時間間隔
-
-  real(8) :: f   !コリオリパラメータ
   real(8) :: h(0:Nx+1)  !基準面からの水深
   real(8) :: u(0:Nx), v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), u_b(0:Nx), v_b(0:Nx+1) !u_b, v_bは移流計算実行用の一時格納配列
   real(8) :: Au(0:Nx), Az(1:Nx), b(1:Nx) !係数
   real(8) :: Fu(Nx), Fv(Nx)
-  real(8) :: dx  !格子間隔
   real(8) :: Res, difference  !Resは残差のl2ノルム、differenceは前の時間との残差  
   integer :: times, cyc !時間ループ用と収束までの繰り返し用
   integer :: ios !ファイル開く用
-  integer :: i, j !空間ループ用
+  integer :: i !空間ループ用
   real(8) :: Fu_tmp, Fv_tmp
 
   !for debug
@@ -68,13 +54,8 @@ program main
   ! if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
   
 
-  !!コリオリパラメータfと格子間隔dxの計算
-  f = f0
-  dx = X/Nx
-  write(*,*) dx
-
   !u,v,z,gamma,hの初期化
-  call initialize(u,v,z,gamma,h,dx,Nx)
+  call initialize(u,v,z,gamma,h)
 
   !メインのループ
   do times = 0, ntmax-1
@@ -123,8 +104,8 @@ program main
     write(*,*) 'times = ', times, sum(z)
     u_b(:) = u(:)
     v_b(:) = v(:)
-    call calc_u(u,v_b,z,f,gamma,dt,dx,dtau,g,times,Nx)
-    call calc_v(u_b,v,f,gamma,dt,dx,dtau,Nx)
+    call calc_u(u,v_b,z,f,gamma,dx,times,Nx)
+    call calc_v(u_b,v,f,gamma,dx,Nx)
     call calc_gamma(u,v,z,h,gamma,g,Cz,Nx)
     
     ! write(12,*) u(1:Nx)
@@ -142,34 +123,12 @@ program main
       !     write(11,*) z_frac(v(i,j-1:j))
       !   end do
       ! end do
-      write(12,*) z(0:Nx)
+      ! write(12,*) z(0:Nx)
     endif
   end do
 
   stop
 contains
-
-  subroutine initialize(u,v,z,gamma,h,dx,Nx)
-    implicit none
-
-    integer, intent(in) :: Nx
-    real(8), intent(in) :: dx
-    real(8), intent(out) :: u(0:Nx), v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), h(0:Nx+1)
-
-    integer :: i, j
-
-    u(:) = u_upstream
-    v(:) = 0.d0
-    z(:) = 0.d0
-    h(:) = 0.d0
-    z(:) = 0.d0 
-    do i = 0, Nx+1
-      h(i) = 1.d3 - 10.d0*(Nx-i)/Nx
-    end do
-    gamma(:) = 0.d0
-    call boundary_u(u,Nx,1)
-    
-  end subroutine initialize
 
   recursive subroutine MGCYC(l,k,z,Au,Az,b,nu1,nu2,Nx,Nxc,Res,origin_zf,cyc,times)
     implicit none
@@ -226,28 +185,28 @@ contains
       call smooth(z,Au,Az,b,Nx)
     end do
 
-    if(mod(times,10)==0 .and. cyc==20) then
-    ! if(cyc==350) then
-      select case(k)
-      case(1)
-        write(20,*) origin_zf(:) + z(1:Nx)
-      case(2)
-        write(21,*) origin_zf(:) + z(1:Nx)
-      case(3)
-        write(22,*) origin_zf(:) + z(1:Nx)
-      case(4)
-        write(23,*) origin_zf(:) + z(1:Nx)
-      case(5)
-        write(24,*) origin_zf(:) + z(1:Nx)
-      case(6)
-        write(25,*) origin_zf(:) + z(1:Nx)
-      case(7)
-        write(26,*) origin_zf(:) + z(1:Nx)
-      case(8)
-        write(27,*) origin_zf(:) + z(1:Nx)
-      case default
-      end select
-    end if
+    ! if(mod(times,10)==0 .and. cyc==20) then
+    ! ! if(cyc==350) then
+    !   select case(k)
+    !   case(1)
+    !     write(20,*) origin_zf(:) + z(1:Nx)
+    !   case(2)
+    !     write(21,*) origin_zf(:) + z(1:Nx)
+    !   case(3)
+    !     write(22,*) origin_zf(:) + z(1:Nx)
+    !   case(4)
+    !     write(23,*) origin_zf(:) + z(1:Nx)
+    !   case(5)
+    !     write(24,*) origin_zf(:) + z(1:Nx)
+    !   case(6)
+    !     write(25,*) origin_zf(:) + z(1:Nx)
+    !   case(7)
+    !     write(26,*) origin_zf(:) + z(1:Nx)
+    !   case(8)
+    !     write(27,*) origin_zf(:) + z(1:Nx)
+    !   case default
+    !   end select
+    ! end if
 
   end subroutine MGCYC
 

@@ -2,10 +2,10 @@
 FC			:= gfortran
 
 #options
-FFLAGS	:= 
+FFLAGS	:= -O3
 
 #source(s)
-SRC			:= constant.f90 boundary.f90 calc_variables.f90 transfer.f90 main.f90
+SRC			:= constant.f90 boundary.f90 initialize.f90 calc_variables.f90 transfer.f90 main.f90
 # SRC			:= boundary.f90 translation.f90 test.f90
 
 #object(s)
