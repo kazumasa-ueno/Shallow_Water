@@ -1,5 +1,5 @@
 !********************************************
-!	中央部にアノマリーを置いたときのロスビー波や重力波の伝播
+!  中央部にアノマリーを置いたときのロスビー波や重力波の伝播
 ! 浅水波方程式をマルチグリッド法で解くプログラム
 ! Semi-implicit Semi-Lagtange法を使用して離散化
 !********************************************
@@ -9,33 +9,20 @@ program main
   use boundary_mod
   use calc_variables_mod
   use transfer_mod
+  use initialization
   use,intrinsic :: iso_fortran_env
   implicit none
 
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
   
-  integer, parameter :: l = 3               !グリッドの深さ
-  integer, parameter :: Nx = 512
-  integer, parameter :: ntmax = 30000       !時間ステップ
-  integer, parameter :: nu1 = 2, nu2 = 1    !マルチグリッドサイクル内のsmooth回数
-  real(8), parameter :: g = 9.81d0          !重力定数
-  real(8), parameter :: Cz = 80.d0          !Chezy 摩擦係数
-  real(8), parameter :: pi = 4*atan(1.d0)   !円周率
-  real(8), parameter :: f0 = 4*pi/86400     !コリオリパラメータf0
-  real(8), parameter :: X = 2.d6            !領域サイズ
-  ! real(8), parameter :: dt = 60.d0*4				!時間間隔
-  real(8), parameter :: dt = 90.d0          !時間間隔
-  real(8), parameter :: dtau = dt/10.d0     !移流計算用小時間間隔
-
-  real(8) :: f !コリオリパラメータ
-  real(8) :: h(0:Nx+1) !基準面からの水深
+  real(8) :: h(0:Nx+1)  !基準面からの水深
   real(8) :: u(0:Nx), v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), u_b(0:Nx), v_b(0:Nx+1) !u_b, v_bは移流計算実行用の一時格納配列
   real(8) :: Au(0:Nx), Az(1:Nx), b(1:Nx) !係数
-  ! real(8) :: Fu(Nx), Fv(Nx)
-  real(8) :: dx !格子間隔
-  real(8) :: Res, difference !Resは残差のl2ノルム、differenceは前の時間との残差	
+  real(8) :: Fu(Nx), Fv(Nx)
+  real(8) :: Res, difference  !Resは残差のl2ノルム、differenceは前の時間との残差  
   integer :: times, cyc !時間ループ用と収束までの繰り返し用
   integer :: ios !ファイル開く用
+  integer :: i !空間ループ用
   real(8) :: Fu_tmp, Fv_tmp
 
   !for debug
@@ -45,35 +32,30 @@ program main
   ! if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
   ! open(unit=11, file="./output/v.txt", iostat=ios, status="replace", action="write")
   ! if ( ios /= 0 ) stop "Error opening file ./output/v.txt"
-  open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
-  open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-  open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
-  open(unit=22, file="./output/z3.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
-  open(unit=23, file="./output/z4.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-  open(unit=24, file="./output/z5.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
-  open(unit=25, file="./output/z6.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
-  open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
-  open(unit=27, file="./output/z8.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+  ! open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
+  ! open(unit=20, file="./output/z1.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+  ! open(unit=21, file="./output/z2.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
+  ! open(unit=22, file="./output/z3.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
+  ! open(unit=23, file="./output/z4.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+  ! open(unit=24, file="./output/z5.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z2.txt"
+  ! open(unit=25, file="./output/z6.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z3.txt"
+  ! open(unit=26, file="./output/z7.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
+  ! open(unit=27, file="./output/z8.txt", iostat=ios, status="replace", action="write")
+  ! if ( ios /= 0 ) stop "Error opening file ./output/z1.txt"
   ! open(unit=30, file="./output/res5.txt", iostat=ios, status="replace", action="write")
   ! if ( ios /= 0 ) stop "Error opening file ./output/res.txt"
   
 
-  !!コリオリパラメータfと格子間隔dxの計算
-  f = f0
-  dx = X/Nx
-  write(*,*) dx
-
   !u,v,z,gamma,hの初期化
-  call initialize(u,v,z,gamma,h,dx,Nx)
+  call initialize(u,v,z,gamma,h)
 
   !メインのループ
   do times = 0, ntmax-1
@@ -91,20 +73,20 @@ program main
     
     !収束するまで繰り返し
     ! do while(Res>1.e-17)
-    ! 	cyc = cyc + 1
+    !   cyc = cyc + 1
     do cyc = 1, 500
       Prev(:) = z(:)
       
       !zの計算
       ! call MGCYC(l,l,z,Au,Av,Az,b,nu1,nu2,Y,Nx,Ny,Nx/2,Ny/2,Res)
-      call MGCYC(l,l,z,Au,Az,b,nu1,nu2,Nx,Nx/2,Res,z(1:Nx),cyc,times)
+      call MGCYC(l,z,Au,Az,b,Nx,Nx/2,Res,z(1:Nx),cyc,times)
       ! call smooth(z,Au,Az,b,Nx)
       ! if(times==1) then
-      ! 	write(12,*) z(1:Nx)
+      !   write(12,*) z(1:Nx)
       ! endif
       Fu_tmp = calc_Fuu(0,u,dt,dx,dtau,Nx)
       Fv_tmp = calc_Fvu(0,u,v,dt,dx,dtau,Nx)
-      call boundary(z,Nx,dt,dx,gamma,f,g,Fu_tmp,Fv_tmp,u)
+      call boundary(z,Nx,dt,dx,gamma,Fu_tmp,Fv_tmp,u)
       
       tmp(:) = reshape(Prev(:) - z(:),(/(Nx+2)/))
       difference = dot_product(tmp,tmp)
@@ -112,7 +94,7 @@ program main
       call calc_res(z,Au,Az,b,Nx,Res)
       
       ! if(times==4 .and. cyc<51) then
-      ! 	write(30,*) Res
+      !   write(30,*) Res
       ! end if
       ! write(*,*) 'cyc = ', cyc, Res, difference
       
@@ -122,11 +104,10 @@ program main
     write(*,*) 'times = ', times, sum(z)
     u_b(:) = u(:)
     v_b(:) = v(:)
-    call calc_u(u,v_b,z,f,gamma,dt,dx,dtau,g,times,Nx)
-    call calc_v(u_b,v,f,gamma,dt,dx,dtau,Nx)
+    call calc_u(u,v_b,z,gamma,times,Nx)
+    call calc_v(u_b,v,gamma,Nx)
     call calc_gamma(u,v,z,h,gamma,g,Cz,Nx)
     
-    ! write(12,*) u(1:Nx)
 
     !時間計測終わり
     call system_clock(time_end_c)
@@ -134,53 +115,25 @@ program main
     ! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
     
     !格子中心での値を記録
-    if(mod(times,10)==0) then
-      ! do j = 1, Ny
-      ! 	do i = 1, Nx
-      ! 		write(10,*) z_frac(u(i-1:i,j))
-      ! 		write(11,*) z_frac(v(i,j-1:j))
-      ! 	end do
-      ! end do
-      write(12,*) z(0:Nx)
-    endif
+    ! if(mod(times,10)==0) then
+      ! write(12,*) z(0:Nx)
+    ! endif
   end do
 
   stop
 contains
 
-  subroutine initialize(u,v,z,gamma,h,dx,Nx)
+  recursive subroutine MGCYC(k,z,Au,Az,b,Nx,Nxc,Res,origin_zf,cyc,times)
     implicit none
 
-    integer, intent(in) :: Nx
-    real(8), intent(in) :: dx
-    real(8), intent(out) :: u(0:Nx), v(0:Nx+1), z(0:Nx+1), gamma(0:Nx+1), h(0:Nx+1)
-
-    integer :: i
-
-    u(:) = u_upstream
-    v(:) = 0.d0
-    z(:) = 0.d0
-    h(:) = 0.d0
-    z(:) = 0.d0 
-    do i = 0, Nx+1
-      h(i) = 1.d3 - 10.d0*(Nx-i)/Nx
-    end do
-    gamma(:) = 0.d0
-    call boundary_u(u,Nx,1)
-    
-  end subroutine initialize
-
-  recursive subroutine MGCYC(l,k,z,Au,Az,b,nu1,nu2,Nx,Nxc,Res,origin_zf,cyc,times)
-    implicit none
-
-    integer, intent(in) :: l, k, nu1, nu2, Nx, Nxc
+    integer, intent(in) :: k, Nx, Nxc
     real(8), intent(in) :: Au(0:Nx), Az(1:Nx), b(1:Nx)
     real(8), intent(inout) :: z(0:Nx+1)
     real(8), intent(out) :: Res
     real(8), intent(in) :: origin_zf(1:Nx)
     integer, intent(in) :: cyc, times
 
-    integer :: nt, i
+    integer :: nt, i, ntmax
     real(8) :: df(1:Nx), dc(1:Nxc), wf(0:Nx+1), wc(0:Nxc+1) !defects and errors etc.
     real(8) :: Auc(0:Nxc), Azc(1:Nxc)
     real(8) :: origin_zc(1:Nxc)
@@ -210,7 +163,7 @@ contains
         call smooth(wc,Auc,Azc,dc,Nxc)
       end do
     else
-      call MGCYC(l,k-1,wc,Auc,Azc,dc,nu1,nu2,Nxc,Nxc/2,Res,origin_zc,cyc,times)
+      call MGCYC(k-1,wc,Auc,Azc,dc,Nxc,Nxc/2,Res,origin_zc,cyc,times)
     end if
 
     !Interpolate the correction
@@ -225,28 +178,29 @@ contains
       call smooth(z,Au,Az,b,Nx)
     end do
 
-    if(mod(times,10)==0 .and. cyc==20) then
-    ! if(cyc==350) then
-      select case(k)
-      case(1)
-        write(20,*) origin_zf(:) + z(1:Nx)
-      case(2)
-        write(21,*) origin_zf(:) + z(1:Nx)
-      case(3)
-        write(22,*) origin_zf(:) + z(1:Nx)
-      case(4)
-        write(23,*) origin_zf(:) + z(1:Nx)
-      case(5)
-        write(24,*) origin_zf(:) + z(1:Nx)
-      case(6)
-        write(25,*) origin_zf(:) + z(1:Nx)
-      case(7)
-        write(26,*) origin_zf(:) + z(1:Nx)
-      case(8)
-        write(27,*) origin_zf(:) + z(1:Nx)
-      case default
-      end select
-    end if
+
+    ! if(mod(times,10)==0 .and. cyc==20) then
+    ! ! if(cyc==350) then
+    !   select case(k)
+    !   case(1)
+    !     write(20,*) origin_zf(:) + z(1:Nx)
+    !   case(2)
+    !     write(21,*) origin_zf(:) + z(1:Nx)
+    !   case(3)
+    !     write(22,*) origin_zf(:) + z(1:Nx)
+    !   case(4)
+    !     write(23,*) origin_zf(:) + z(1:Nx)
+    !   case(5)
+    !     write(24,*) origin_zf(:) + z(1:Nx)
+    !   case(6)
+    !     write(25,*) origin_zf(:) + z(1:Nx)
+    !   case(7)
+    !     write(26,*) origin_zf(:) + z(1:Nx)
+    !   case(8)
+    !     write(27,*) origin_zf(:) + z(1:Nx)
+    !   case default
+    !   end select
+    ! end if
 
   end subroutine MGCYC
 

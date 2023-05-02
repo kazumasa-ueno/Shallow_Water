@@ -8,11 +8,11 @@ module boundary_mod
   
 contains
 
-  subroutine boundary(z,Nx,dt,dx,gamma,f,g,Fu,Fv,u)
+  subroutine boundary(z,Nx,dt,dx,gamma,Fu,Fv,u)
     implicit none
 
     integer, intent(in) :: Nx
-    real(8), intent(in) :: dt,dx,gamma(0:Nx+1),f,Fu,Fv,g,u(0:Nx)
+    real(8), intent(in) :: dt,dx,gamma(0:Nx+1),Fu,Fv,u(0:Nx)
     real(8), intent(inout) :: z(0:Nx+1)
 
     ! z(0) = z(1) - dx/(g*dt)*((1+(gamma(0)+gamma(1))*0.5d0*dt)*u(0)-Fu-f*dt*Fv)
