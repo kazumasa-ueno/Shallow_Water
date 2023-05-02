@@ -1,6 +1,6 @@
 module constant
-  real(8) :: u_upstream = 0.5d0
-  real(8) :: v_upstream = 0.d0
+  real(8),parameter :: u_upstream = 0.5d0
+  real(8), parameter :: v_upstream = 0.d0
 
   integer, parameter :: l = 3                !グリッドの深さ
   integer, parameter :: Nx = 1024
@@ -15,6 +15,6 @@ module constant
   real(8), parameter :: dt = 90.d0          !時間間隔
   real(8), parameter :: dtau = dt/10.d0      !移流計算用小時間間隔
 
-  real(8) :: f=f0   !コリオリパラメータ
-  real(8) :: dx=X/Nx  !格子間隔
+  real(8), parameter :: f=f0   !コリオリパラメータ
+  real(8), parameter :: dx=X/Nx  !格子間隔
 end module constant
