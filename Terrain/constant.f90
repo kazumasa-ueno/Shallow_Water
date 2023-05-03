@@ -17,4 +17,6 @@ module constant
 
   real(8), parameter :: f=f0   !コリオリパラメータ
   real(8), parameter :: dx=X/Nx  !格子間隔
+
+  real(8), parameter :: XForce = 1.d-5
 end module constant

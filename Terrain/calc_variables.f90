@@ -37,7 +37,7 @@ contains
       Fu = calc_Fuu(i,u_b,dt,dx,dtau,Nx)
       Fv = calc_Fvu(i,u_b,v,dt,dx,dtau,Nx)
       u(i) = (Fu - g*(dt/dx)*(z(cir_i(i+1,Nx))-z(cir_i(i,Nx))) &
-      & + f*dt*Fv) / (1+(gamma(cir_i(i,Nx))+gamma(cir_i(i+1,Nx)))*0.5d0*dt)
+      & + f*dt*Fv + dt*XForce) / (1+(gamma(cir_i(i,Nx))+gamma(cir_i(i+1,Nx)))*0.5d0*dt)
     end do
 
     ! call boundary_u(u,Nx,times)      
@@ -75,7 +75,11 @@ contains
 
     integer :: i
 
-    gamma = 0.d0
+		do i = 0, Nx+1
+			gamma(i) = g*sqrt(((u(cir_i(i-1,Nx))+u(cir_i(i,Nx)))*0.5d0)**2+v(i)**2) &
+			& /(Cz**2*(h(i)+z(i)))
+		enddo
+    ! gamma = 0.d0
     
   end subroutine calc_gamma
 
@@ -127,9 +131,9 @@ contains
       Fv(2) = calc_Fvu(i-1,u,v,dt,dx,dtau,Nx)
       b(i) = z(i) - (dt/dx) * ( &
       & (z_frac(z(i:i+1))+z_frac(h(i:i+1))) / (1+z_frac(gamma(i:i+1))*dt) &
-      & * (Fu(1)+f*dt*Fv(1)) &
+      & * (Fu(1)+f*dt*Fv(1)+dt*XForce) &
       & - (z_frac(z(i-1:i))+z_frac(h(i-1:i))) / (1+z_frac(gamma(i-1:i))*dt) &
-      & * (Fu(2)+f*dt*Fv(2)) )
+      & * (Fu(2)+f*dt*Fv(2)+dt*XForce) )
     end do
 
   end subroutine calc_b
