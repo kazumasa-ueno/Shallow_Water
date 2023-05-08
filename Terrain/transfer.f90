@@ -36,7 +36,7 @@ contains
     real(8), intent(in) :: df(1:2*Nx)
     real(8), intent(out) :: dc(1:Nx)
 
-    integer :: ic, iff
+    integer :: ic, jc, iff, jff
 
     do ic = 1, Nx
       iff = 2*ic
