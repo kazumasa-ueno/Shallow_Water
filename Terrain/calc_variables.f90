@@ -75,10 +75,10 @@ contains
 
     integer :: i
 
-		do i = 0, Nx+1
-			gamma(i) = g*sqrt(((u(cir_i(i-1,Nx))+u(cir_i(i,Nx)))*0.5d0)**2+v(i)**2) &
-			& /(Cz**2*(h(i)+z(i)))
-		enddo
+    do i = 0, Nx+1
+      gamma(i) = g*sqrt(((u(cir_i(i-1,Nx))+u(cir_i(i,Nx)))*0.5d0)**2+v(i)**2) &
+      & /(Cz**2*(h(i)+z(i)))
+    enddo
     ! gamma = 0.d0
     
   end subroutine calc_gamma
