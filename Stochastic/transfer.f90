@@ -9,60 +9,71 @@ module transfer_mod
   
 contains
 
-  ! I_k^{k-1}
-  subroutine Prolongation(Auf,Azf,Auc,Azc,Nx)
+  ! level -> level+1
+  subroutine Prolongation(level,u,z,h)
     implicit none
 
-    integer, intent(in) :: Nx !course grid number
-    real(8), intent(in) :: Auf(0:2*Nx), Azf(1:2*Nx)
-    real(8), intent(out) :: Auc(0:Nx), Azc(1:Nx)
+    integer, intent(in) :: level 
+    real(8), intent(inout) :: u(:,:), z(:,:), h(:,:)
 
     integer :: ic, iff
 
-    do ic = 0, Nx
-      iff = 2*ic
-      Auc(ic) = Auf(iff)
-      ! Azc(ic,jc) = (Azf(iff,jff) + Azf(iff-1,jff) + Azf(iff,jff-1) + Azf(iff-1,jff-1))/4.d0
-    end do
+    real(8) :: ldx
+    integer :: lNx
 
-    call calc_Az(Auc,Nx,Azc)
+    call calc_level(level,ldx,lNx)
+
+    do ic = 1, lNx
+      iff = 2*ic
+      u(ic,level+1) = u(cir(iff,lNx),level)
+      z(ic,level+1) = (z(cir(iff,lNx),level) + z(cir(iff-1,lNx),level))*0.5d0
+      h(ic,level+1) = (h(cir(iff,lNx),level) + h(cir(iff-1,lNx),level))*0.5d0
+    end do
 
   end subroutine Prolongation
 
-  subroutine Prolongation_defect(df,dc,Nx)
+  ! level -> level+1
+  subroutine Prolongation_defect(level,residual)
     implicit none
 
-    integer, intent(in) :: Nx !course grid number
-    real(8), intent(in) :: df(1:2*Nx)
-    real(8), intent(out) :: dc(1:Nx)
+    integer :: level
+    real(8), intent(inout) :: residual(:,:)
 
-    integer :: ic, jc, iff, jff
+    integer :: ic, iff
+    real(8) :: ldx !細かい方の格子幅
+    integer :: lNx !細かい方の格子数
 
-    do ic = 1, Nx
+    call calc_level(level,ldx,lNx)
+
+    do ic = 1, lNx/2
       iff = 2*ic
-      dc(ic) = (df(iff) + df(iff-1))*0.5d0
+      residual(ic,level+1) = (residual(cir(iff,lNx),level) + residual(cir(iff-1,lNx),level))*0.5d0
     end do
 
   end subroutine Prolongation_defect
 
-  !I_k^{k+1}
-  subroutine Interpolation_defect(dc,df,Nx)
+  ! level -> level-1
+  subroutine Interpolation_defect(level,residual)
     implicit none
 
-    integer, intent(in) :: Nx !fine grid number
-    real(8), intent(in)  :: dc(0:Nx/2+1)
-    real(8), intent(out) :: df(0:Nx+1)
+    integer, intent(in) :: level !fine grid number
+    real(8), intent(inout)  :: residual(:,:)
 
     integer :: ic, iff
     real(8) :: dc1, dc2, dc3
 
+    real(8) :: ldx
+    integer :: lNx
+
+    call calc_level(level,ldx,lNx)
+
     do iff = 2, Nx, 2
       ic = iff/2
-      dc1 = dc(ic)
-      dc2 = dc(ic-1)
-      dc3 = dc(ic+1)
-      df(iff) = (3*dc1+dc3)*0.25
-      df(iff-1) = (3*dc1+dc2)*0.25
+      dc1 = residual(cir(ic  ,lNx),level)
+      dc2 = residual(cir(ic-1,lNx),level)
+      dc3 = residual(cir(ic+1,lNx),level)
+      residual(iff,level-1) = (3*dc1+dc3)*0.25
+      residual(iff-1,level-1) = (3*dc1+dc2)*0.25
     end do
     
   end subroutine Interpolation_defect
