@@ -37,22 +37,22 @@ contains
   !Restrict the defect
   call Prolongation(k,u,z,h)
   call Prolongation_defect(k,residual)
-  call calc_Au(k,z,h,Au)
-  call calc_Az(k,Au,Az)
-  call calc_b(k,u,z,h,b)
+  call calc_Au(k-1,z,h,Au)
+  call calc_Az(k-1,Au,Az)
+  call calc_b(k-1,u,z,h,b)
   ! write(*,*) 'ok'
 
   !Compute an approximate solution v of the defect equation on k-1
-    if(k==1) then
+    if(k==2) then
       do nt = 1, 1
-        call smooth(k,residual,Au,Az,b)
+        call smooth(k-1,residual,Au,Az,b)
       end do
     else
       call MGCYC(k-1,u,z,h,Au,Az,b,residual,cyc,times)
     end if
 
     !Interpolate the correction
-    call Interpolation_defect(k,residual)
+    call Interpolation_defect(k-1,residual)
 
     !Compute the corrected approximation on k
     z(:,k) = z(:,k) + residual(:,k)

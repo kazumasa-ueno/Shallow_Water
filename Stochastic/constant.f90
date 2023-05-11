@@ -1,7 +1,7 @@
 module constant
 
   integer, parameter :: num_levels = 3                !グリッドの深さ
-  integer, parameter :: Nx = 512
+  integer, parameter :: Nx = 128
   integer, parameter :: ntmax = 3000        !時間ステップ
   integer, parameter :: nu1 = 2, nu2 = 1    !マルチグリッドサイクル内のsmooth回数
   real(8), parameter :: X = 4.d6            !領域サイズ
@@ -15,5 +15,5 @@ module constant
   ! real(8), parameter :: f=f0   !コリオリパラメータ
   real(8), parameter :: dx=X/Nx  !格子間隔
 
-  real(8), parameter :: XForce = 1.d-5
+  real(8), parameter :: XForce = 1.d-4
 end module constant

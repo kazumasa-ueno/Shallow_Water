@@ -101,7 +101,7 @@ contains
     integer :: lNx
     
     call calc_level(level,ldx,lNx)
-    do i = 1, Nx
+    do i = 1, lNx
       Fu(1) = calc_Fuu(level,i,u)
       Fu(2) = calc_Fuu(level,i-1,u)
       b(i,level) = z(cir(i,lNx),level) - (dt/ldx) * ( &
@@ -200,8 +200,8 @@ contains
     real(8), intent(out) :: ldx
     integer, intent(out) :: lNx
     
-    ldx = dx*2**(level-1)
-    lNx = Nx/2**(level-1)
+    ldx = dx*2**(num_levels-level)
+    lNx = Nx/2**(num_levels-level)
 
   end subroutine calc_level
 

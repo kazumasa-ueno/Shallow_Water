@@ -12,6 +12,7 @@ program main
   use initialization
   use solve
   use,intrinsic :: iso_fortran_env
+  use, intrinsic :: ieee_arithmetic
   implicit none
 
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
@@ -27,19 +28,29 @@ program main
   !for debug
   real(8) :: Prev(Nx), tmp(Nx) !前の値を格納しておくための配列
 
+  integer :: i, l
+
   ! open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
   ! if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
   open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
   if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
   
 
-  !u,v,z,gamma,hの初期化
+  !u,z,hの初期化
   call initialize(u,z,h)
+  do l = 1, num_levels
+    do i = 1, Nx
+      Au(i,l) = 0.d0
+      Az(i,l) = 0.d0
+      b(i,l) = 0.d0
+      residual(i,l) = 0.d0
+    enddo
+  enddo
   
   !メインのループ
   do times = 0, ntmax-1
     !時間計測スタート
-    call system_clock(time_begin_c, CountPerSec, CountMax)
+    ! call system_clock(time_begin_c, CountPerSec, CountMax)
     
     !係数計算
     call calc_Au(num_levels,z,h,Au)
@@ -79,7 +90,7 @@ program main
     
     
     !時間計測終わり
-    call system_clock(time_end_c)
+    ! call system_clock(time_end_c)
     ! print *,time_begin_c,time_end_c, CountPerSec,CountMax
     ! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
     
