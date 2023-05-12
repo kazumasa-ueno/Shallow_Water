@@ -13,6 +13,7 @@
 module calc_variables_mod
   use constant
   use boundary_mod
+  use transfer_mod
   implicit none
 
   interface z_frac
@@ -117,6 +118,21 @@ contains
 
   end subroutine calc_b
 
+  subroutine calc_coef(u,z,h,Au,Az,b)
+    implicit none
+
+    real(8), intent(in) :: u(:,:), z(:,:), h(:,:)
+    real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:)
+    integer :: l, i
+
+    do l = num_levels, 1, -1
+      call calc_Au(l,z,h,Au)
+      call calc_Az(l,Au,Az)
+      call calc_b(l,u,z,h,b)
+      ! call Prolongation(l,u,z,h)
+    enddo
+  end subroutine calc_coef
+
 
   ! calculate Fu(i+1/2) actuarlly(u(i))
   ! 0 <= i <= Nx
@@ -196,18 +212,6 @@ contains
     Res = (Res**0.5d0)/Nx
 
   end subroutine calc_res
-
-  subroutine calc_level(level,ldx,lNx)
-    implicit none
-
-    integer, intent(in) :: level
-    real(8), intent(out) :: ldx
-    integer, intent(out) :: lNx
-    
-    ldx = dx*2**(num_levels-level)
-    lNx = Nx/2**(num_levels-level)
-
-  end subroutine calc_level
 
 
 end module calc_variables_mod

@@ -1,6 +1,6 @@
 module constant
 
-  integer, parameter :: num_levels = 3                !グリッドの深さ
+  integer, parameter :: num_levels = 2                !グリッドの深さ
   integer, parameter :: Nx = 128
   integer, parameter :: ntmax = 9000        !時間ステップ
   integer, parameter :: nu1 = 2, nu2 = 1    !マルチグリッドサイクル内のsmooth回数

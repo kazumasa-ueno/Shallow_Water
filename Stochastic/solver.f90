@@ -37,10 +37,9 @@ contains
   !Restrict the defect
   call Prolongation(k,u,z,h)
   call Prolongation_defect(k,residual)
-  call calc_Au(k-1,z,h,Au)
-  call calc_Az(k-1,Au,Az)
-  call calc_b(k-1,u,z,h,b)
-  ! write(*,*) 'ok'
+  ! call calc_Au(k-1,z,h,Au)
+  ! call calc_Az(k-1,Au,Az)
+  ! call calc_b(k-1,u,z,h,b)
 
   !Compute an approximate solution v of the defect equation on k-1
     if(k==2) then

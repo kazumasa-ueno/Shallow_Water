@@ -46,27 +46,25 @@ program main
     ! call system_clock(time_begin_c, CountPerSec, CountMax)
     
     !係数計算
-    call calc_Au(num_levels,z,h,Au)
-    call calc_Az(num_levels,Au,Az)
-    call calc_b(num_levels,u,z,h,b)
+    call calc_coef(u,z,h,Au,Az,b)
     
     difference = 100 !大きな値にセット
     Res = 100 !同上
     cyc = 0
     
     !収束するまで繰り返し
-    ! do while(Res>1.e-17)
+    ! do while(Res>1.e-19)
     !   cyc = cyc + 1
-    do cyc = 1, 500
-      ! Prev(:) = z(:,1)
+    do cyc = 1, 5000
+      Prev(:) = z(:,num_levels)
       
       !zの計算
-      ! call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
-      call smooth(num_levels,z,Au,Az,b)
+      call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
+      ! call smooth(num_levels,z,Au,Az,b)
       
-      ! tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
-      ! difference = dot_product(tmp,tmp)      
-      ! call calc_res(z,Au,Az,b,Res)      
+      tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
+      difference = dot_product(tmp,tmp)      
+      call calc_res(z,Au,Az,b,Res)      
       ! if(times==4 .and. cyc<51) then
       !   write(30,*) Res
       ! end if
@@ -74,9 +72,11 @@ program main
       
     end do
     
-    write(*,*) 'times = ', times, sum(z(:,num_levels))
+    write(*,*) 'times = ', times, sum(z(:,num_levels)), Res
     u_b(:,:) = u(:,:)
-    call calc_u(num_levels,u,z)
+    do l = 1, num_levels
+      call calc_u(l,u,z)
+    enddo
     
     !時間計測終わり
     ! call system_clock(time_end_c)

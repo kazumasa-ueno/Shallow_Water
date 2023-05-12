@@ -4,7 +4,6 @@
 
 module transfer_mod
   use boundary_mod
-  use calc_variables_mod
   implicit none
   
 contains
@@ -77,4 +76,16 @@ contains
     end do
     
   end subroutine Interpolation_defect
+
+  subroutine calc_level(level,ldx,lNx)
+    implicit none
+
+    integer, intent(in) :: level
+    real(8), intent(out) :: ldx
+    integer, intent(out) :: lNx
+    
+    ldx = dx*2**(num_levels-level)
+    lNx = Nx/2**(num_levels-level)
+
+  end subroutine calc_level
 end module transfer_mod
