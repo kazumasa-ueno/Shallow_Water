@@ -1,6 +1,6 @@
 !********************************************
-!  中央部にアノマリーを置いたときのロスビー波や重力波の伝播
-! 浅水波方程式をマルチグリッド法で解くプログラム
+! Stochastic forcingに対する応答
+! 浅水波方程式をFMGで解くプログラム
 ! Semi-implicit Semi-Lagtange法を使用して離散化
 !********************************************
 
@@ -18,7 +18,7 @@ program main
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
   
   real(8) :: h(Nx,num_levels)  !基準面からの水深
-  real(8) :: u(Nx,num_levels), z(Nx,num_levels), u_b(Nx,num_levels) !u_b, v_bは移流計算実行用の一時格納配列
+  real(8) :: u(Nx,num_levels), z(Nx,num_levels), u_b(Nx,num_levels) !u_bは移流計算実行用の一時格納配列
   real(8) :: Au(Nx,num_levels), Az(Nx,num_levels), b(Nx,num_levels) !係数
   real(8) :: residual(Nx,num_levels)
   real(8) :: Res, difference  !Resは残差のl2ノルム、differenceは前の時間との残差  
@@ -38,14 +38,7 @@ program main
 
   !u,z,hの初期化
   call initialize(u,z,h)
-  do l = 1, num_levels
-    do i = 1, Nx
-      Au(i,l) = 0.d0
-      Az(i,l) = 0.d0
-      b(i,l) = 0.d0
-      residual(i,l) = 0.d0
-    enddo
-  enddo
+  call init_coef(Au,Az,b,residual)
   
   !メインのループ
   do times = 0, ntmax-1
@@ -65,29 +58,25 @@ program main
     ! do while(Res>1.e-17)
     !   cyc = cyc + 1
     do cyc = 1, 500
-      Prev(:) = z(:,1)
+      ! Prev(:) = z(:,1)
       
       !zの計算
-      call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
-      ! call smooth(1,z,Au,Az,b)
+      ! call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
+      call smooth(1,z,Au,Az,b)
       
-      tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
-      difference = dot_product(tmp,tmp)
-      
-      call calc_res(z,Au,Az,b,Res)
-      
+      ! tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
+      ! difference = dot_product(tmp,tmp)      
+      ! call calc_res(z,Au,Az,b,Res)      
       ! if(times==4 .and. cyc<51) then
       !   write(30,*) Res
       ! end if
       ! write(*,*) 'cyc = ', cyc, Res, difference
       
     end do
-    ! call boundary(z,Nx,Ny)
     
     write(*,*) 'times = ', times, sum(z)
     u_b(:,:) = u(:,:)
-    call calc_u(1,u,z)
-    
+    call calc_u(num_levels,u,z)
     
     !時間計測終わり
     ! call system_clock(time_end_c)
