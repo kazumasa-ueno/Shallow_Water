@@ -62,7 +62,7 @@ program main
       
       !zの計算
       ! call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
-      call smooth(1,z,Au,Az,b)
+      call smooth(num_levels,z,Au,Az,b)
       
       ! tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
       ! difference = dot_product(tmp,tmp)      
@@ -74,7 +74,7 @@ program main
       
     end do
     
-    write(*,*) 'times = ', times, sum(z)
+    write(*,*) 'times = ', times, sum(z(:,num_levels))
     u_b(:,:) = u(:,:)
     call calc_u(num_levels,u,z)
     

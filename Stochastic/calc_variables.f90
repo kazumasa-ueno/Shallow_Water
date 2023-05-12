@@ -40,7 +40,8 @@ contains
     do i = 1, lNx
       Fu = calc_Fuu(level,i,u)
       u_b(i) = (Fu - g*(dt/ldx)*(z(cir(i+1,lNx),level)-z(cir(i,lNx),level)) &
-      & + nu*dt/dx**2*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce)
+      & + dt*XForce)
+      ! & + nu*dt/dx**2*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce)
     end do
     u(:,level) = u_b(:)
     
@@ -106,9 +107,12 @@ contains
       Fu(2) = calc_Fuu(level,i-1,u)
       b(i,level) = z(cir(i,lNx),level) - (dt/ldx) * ( &
       & (z_frac(z(cir(i,lNx),level),z(cir(i+1,lNx),level))+z_frac(h(cir(i,lNx),level),h(cir(i+1,lNx),level))) &
-      & * (Fu(1)+ nu/dx*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce) &
+      & * (Fu(1)+dt*XForce) &
       & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
-      & * (Fu(2)+nu/dx*(u(cir(i,lNx),level)-2*u(cir(i-1,lNx),level)+u(cir(i-2,lNx),level))+dt*XForce) )
+      & * (Fu(2)+dt*XForce) )
+      ! & * (Fu(1)+ nu/dx*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce) &
+      ! & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
+      ! & * (Fu(2)+nu/dx*(u(cir(i,lNx),level)-2*u(cir(i-1,lNx),level)+u(cir(i-2,lNx),level))+dt*XForce) )
     end do
 
   end subroutine calc_b
