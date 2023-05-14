@@ -1,9 +1,9 @@
 module constant
 
-  integer, parameter :: num_levels = 2                !グリッドの深さ
-  integer, parameter :: Nx = 128
-  integer, parameter :: ntmax = 9000        !時間ステップ
-  integer, parameter :: nu1 = 2, nu2 = 1    !マルチグリッドサイクル内のsmooth回数
+  integer, parameter :: num_levels = 6                !グリッドの深さ
+  integer, parameter :: Nx = 512
+  integer, parameter :: ntmax = 15000        !時間ステップ
+  integer, parameter :: nu1 = 2, nu2 = 20    !マルチグリッドサイクル内のsmooth回数
   real(8), parameter :: X = 4.d6            !領域サイズ
   real(8), parameter :: g = 9.81d0           !重力定数
   real(8), parameter :: nu = 1.d11/86400     !粘性係数

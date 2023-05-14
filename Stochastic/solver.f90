@@ -5,56 +5,54 @@ module solve
 
 contains
   recursive subroutine MGCYC(k,u,z,h,Au,Az,b,residual,cyc,times)
-  implicit none
+    implicit none
 
-  integer, intent(in) :: k
-  real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:), u(:,:), h(:,:), residual(:,:)
-  real(8), intent(inout) :: z(:,:)
-  integer, intent(in) :: cyc, times
+    integer, intent(in) :: k
+    real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:), u(:,:), h(:,:), residual(:,:)
+    real(8), intent(inout) :: z(:,:)
+    integer, intent(in) :: cyc, times
 
-  integer :: nt, i
+    integer :: nt, i
 
-  real(8) :: tmp_res(Nx)
+    real(8) :: tmp_z(Nx)
 
-  real(8) :: ldx
-  integer :: lNx
+    real(8) :: ldx
+    integer :: lNx
 
-  call calc_level(k,ldx,lNx)
+    call calc_level(k,ldx,lNx)
 
-  !Presmoothing
-  do nt = 1, nu1
-    call smooth(k,residual,Au,Az,b)
-  end do
+    !Presmoothing
+    do nt = 1, nu1
+      call smooth(k,z,Au,Az,b)
+    end do
 
-  !Coarse grid correction
-  !Compute the defect
-  tmp_res(:) = residual(:,k)
-  do i = 1, lNx
-    residual(i,k) = b(cir(i,lNx),k) + Au(cir(i-1,lNx),k)*tmp_res(cir(i-1,lNx)) &
-    & + Au(cir(i,lNx),k)*tmp_res(cir(i+1,lNx)) - Az(cir(i,lNx),k)*tmp_res(cir(i,lNx))
-  end do
+    !Coarse grid correction
+    !Compute the defect
+    tmp_z(:) = residual(:,k)
+    do i = 1, lNx
+      residual(i,k) = b(cir(i,lNx),k) + Au(cir(i-1,lNx),k)*z(cir(i-1,lNx),k) &
+      & + Au(cir(i,lNx),k)*z(cir(i+1,lNx),k) - Az(cir(i,lNx),k)*z(cir(i,lNx),k)
+    end do
 
-  !Restrict the defect
-  call Prolongation(k,u,z,h)
-  call Prolongation_defect(k,residual)
-  ! call calc_Au(k-1,z,h,Au)
-  ! call calc_Az(k-1,Au,Az)
-  ! call calc_b(k-1,u,z,h,b)
+    !Restrict the defect
+    call Prolongation(k,u,z,h)
+    call Prolongation_defect(k,residual)
 
-  !Compute an approximate solution v of the defect equation on k-1
+    !Compute an approximate solution v of the defect equation on k-1
+    z(:,k-1) = z(:,k-1) + residual(:,k-1)
     if(k==2) then
       do nt = 1, 1
-        call smooth(k-1,residual,Au,Az,b)
+        call smooth(k-1,z,Au,Az,b)
       end do
     else
       call MGCYC(k-1,u,z,h,Au,Az,b,residual,cyc,times)
     end if
 
     !Interpolate the correction
-    call Interpolation_defect(k-1,residual)
+    call Interpolation_defect(k-1,z)
 
     !Compute the corrected approximation on k
-    z(:,k) = z(:,k) + residual(:,k)
+    ! z(:,k) = z(:,k) + residual(:,k)
 
     !Postsmoothing
     do nt = 1, nu2
@@ -62,6 +60,34 @@ contains
     end do
 
   end subroutine MGCYC
+
+  recursive subroutine FMG(max_k, k, u, z, h, Au, Az, b, residual, cyc, times)
+    implicit none
+
+    integer, intent(in) :: max_k, k
+    real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:), u(:,:), h(:,:), residual(:,:)
+    real(8), intent(inout) :: z(:,:)
+    integer, intent(in) :: cyc, times
+
+    integer :: nt, i
+
+    real(8) :: tmp_z(Nx)
+
+    ! real(8) :: ldx
+    ! integer :: lNx
+
+    ! Now do a multigrid V-cycle or W-cycle on the fine grid
+    do i  = 1, 20
+      call MGCYC(k, u, z, h, Au, Az, b, residual, cyc, times)
+    enddo
+
+    if (k < max_k) then
+      call Interpolation_defect(k, z)  ! Interpolate from coarse grid
+      call FMG(max_k, k+1, u, z, h, Au, Az, b, residual, cyc, times)  ! Recursive call
+    end if
+
+  end subroutine FMG
+
 
   subroutine smooth(level,z,Au,Az,b)
     implicit none

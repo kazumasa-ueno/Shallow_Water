@@ -55,11 +55,12 @@ program main
     !収束するまで繰り返し
     ! do while(Res>1.e-19)
     !   cyc = cyc + 1
-    do cyc = 1, 5000
+    do cyc = 1, 10
       Prev(:) = z(:,num_levels)
       
       !zの計算
-      call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
+      ! call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
+      call FMG(num_levels, 2, u, z, h, Au, Az, b, residual, cyc, times)
       ! call smooth(num_levels,z,Au,Az,b)
       
       tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
