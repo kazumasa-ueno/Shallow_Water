@@ -28,9 +28,9 @@ contains
       ! enddo
       call calc_XForce(l,z,h,XForce)
     enddo
-    do i = Nx/5*2, Nx/5*3
-      h(i,num_levels) = 1.d4 - 10.d0
-    end do
+    ! do i = Nx/512, Nx/512*2
+    !   h(i,num_levels) = 1.d4 - 10.d0
+    ! end do
     ! call calc_XForce(2,z,h,XForce)
     
   end subroutine initialize

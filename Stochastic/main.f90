@@ -55,13 +55,13 @@ program main
     !収束するまで繰り返し
     ! do while(Res>1.e-19)
     !   cyc = cyc + 1
-    do cyc = 1, 10
+    do cyc = 1, 50
       Prev(:) = z(:,num_levels)
       
       !zの計算
       ! call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
-      call FMG(num_levels, 2, u, z, h, Au, Az, b, residual, cyc, times)
-      ! call smooth(num_levels,z,Au,Az,b)
+      ! call FMG(num_levels, 2, u, z, h, Au, Az, b, residual, cyc, times)
+      call smooth(num_levels,z,Au,Az,b)
       
       tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
       difference = dot_product(tmp,tmp)      
@@ -76,6 +76,9 @@ program main
     write(*,*) 'times = ', times, sum(z(:,num_levels)), Res
     do l = 1, num_levels
       call calc_u(l,u,z,XForce)
+    enddo
+    do l = 1, num_levels
+      call calc_XForce(l,z,h,XForce)
     enddo
     
     !時間計測終わり

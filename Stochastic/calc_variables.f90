@@ -41,8 +41,8 @@ contains
     do i = 1, lNx
       Fu = calc_Fuu(level,i,u)
       u_b(i) = (Fu - g*(dt/ldx)*(z(cir(i+1,lNx),level)-z(cir(i,lNx),level)) &
-      ! & + dt*XForce(i,level))
-      & + nu*dt/(ldx**2)*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level))
+      & + dt*XForce(i,level))
+      ! & + nu*dt/(ldx**2)*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level))
     end do
     u(:,level) = u_b(:)
     
@@ -108,12 +108,12 @@ contains
       Fu(2) = calc_Fuu(level,i-1,u)
       b(i,level) = z(cir(i,lNx),level) - (dt/ldx) * ( &
       & (z_frac(z(cir(i,lNx),level),z(cir(i+1,lNx),level))+z_frac(h(cir(i,lNx),level),h(cir(i+1,lNx),level))) &
-      ! & * (Fu(1)+dt*XForce(i,level)) &
-      ! & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
-      ! & * (Fu(2)+dt*XForce(i,level)) )
-      & * (Fu(1)+ nu/ldx*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level)) &
+      & * (Fu(1)+dt*XForce(i,level)) &
       & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
-      & * (Fu(2)+ nu/ldx*(u(cir(i,lNx),level)-2*u(cir(i-1,lNx),level)+u(cir(i-2,lNx),level))+dt*XForce(i,level)) )
+      & * (Fu(2)+dt*XForce(i,level)) )
+      ! & * (Fu(1)+ nu/ldx*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level)) &
+      ! & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
+      ! & * (Fu(2)+ nu/ldx*(u(cir(i,lNx),level)-2*u(cir(i-1,lNx),level)+u(cir(i-2,lNx),level))+dt*XForce(i,level)) )
     end do
 
   end subroutine calc_b
@@ -152,8 +152,8 @@ contains
     k = 1
     do i = 1, lNx
       ! XForce(i,level) = (mu*alpha(k)/sqrt(k*dt)*cos(2*pi*(k*i/lNx+psi(k)))) / (z(i,level)+h(i,level))
-      ! XForce(i,level) = (mu/sqrt(k*dt)*cos(20*2*pi*(k*i/lNx))) / (z(i,level)+h(i,level))
-      XForce(i,level) = 1.d-5
+      XForce(i,level) = (mu/sqrt(k*dt)*cos(20*2*pi*(k*i/lNx))) / (z(i,level)+h(i,level))
+      ! XForce(i,level) = XForce_const
     enddo
 
   end subroutine calc_XForce
