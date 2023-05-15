@@ -22,11 +22,11 @@ module calc_variables_mod
   
 contains
 
-  subroutine calc_u(level,u,z)
+  subroutine calc_u(level,u,z,XForce)
     implicit none
     
     integer, intent(in) :: level
-    real(8), intent(in) :: z(:,:)
+    real(8), intent(in) :: z(:,:), XForce(:,:)
     real(8), intent(inout) :: u(:,:)
 
     integer :: i
@@ -41,8 +41,8 @@ contains
     do i = 1, lNx
       Fu = calc_Fuu(level,i,u)
       u_b(i) = (Fu - g*(dt/ldx)*(z(cir(i+1,lNx),level)-z(cir(i,lNx),level)) &
-      & + dt*XForce)
-      ! & + nu*dt/dx**2*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce)
+      ! & + dt*XForce(i,level))
+      & + nu*dt/(ldx**2)*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level))
     end do
     u(:,level) = u_b(:)
     
@@ -90,11 +90,11 @@ contains
     
   end subroutine calc_Az
   
-  subroutine calc_b(level,u,z,h,b)
+  subroutine calc_b(level,u,z,h,b,XForce)
     implicit none
     
     integer, intent(in) :: level
-    real(8), intent(in) :: u(:,:), z(:,:), h(:,:)
+    real(8), intent(in) :: u(:,:), z(:,:), h(:,:), XForce(:,:)
     real(8), intent(inout) :: b(:,:)
     
     integer :: i
@@ -108,30 +108,87 @@ contains
       Fu(2) = calc_Fuu(level,i-1,u)
       b(i,level) = z(cir(i,lNx),level) - (dt/ldx) * ( &
       & (z_frac(z(cir(i,lNx),level),z(cir(i+1,lNx),level))+z_frac(h(cir(i,lNx),level),h(cir(i+1,lNx),level))) &
-      & * (Fu(1)+dt*XForce) &
-      & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
-      & * (Fu(2)+dt*XForce) )
-      ! & * (Fu(1)+ nu/dx*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce) &
+      ! & * (Fu(1)+dt*XForce(i,level)) &
       ! & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
-      ! & * (Fu(2)+nu/dx*(u(cir(i,lNx),level)-2*u(cir(i-1,lNx),level)+u(cir(i-2,lNx),level))+dt*XForce) )
+      ! & * (Fu(2)+dt*XForce(i,level)) )
+      & * (Fu(1)+ nu/ldx*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level)) &
+      & - (z_frac(z(cir(i-1,lNx),level),z(cir(i,lNx),level))+z_frac(h(cir(i-1,lNx),level),h(cir(i,lNx),level))) &
+      & * (Fu(2)+ nu/ldx*(u(cir(i,lNx),level)-2*u(cir(i-1,lNx),level)+u(cir(i-2,lNx),level))+dt*XForce(i,level)) )
     end do
 
   end subroutine calc_b
 
-  subroutine calc_coef(u,z,h,Au,Az,b)
+  subroutine calc_coef(u,z,h,Au,Az,b,XForce)
     implicit none
 
-    real(8), intent(in) :: u(:,:), z(:,:), h(:,:)
+    real(8), intent(in) :: u(:,:), z(:,:), h(:,:), XForce(:,:)
     real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:)
     integer :: l, i
 
     do l = num_levels, 1, -1
       call calc_Au(l,z,h,Au)
       call calc_Az(l,Au,Az)
-      call calc_b(l,u,z,h,b)
+      call calc_b(l,u,z,h,b,XForce)
       ! call Prolongation(l,u,z,h)
     enddo
   end subroutine calc_coef
+
+  subroutine calc_XForce(level,z,h,XForce)
+    implicit none
+
+    integer, intent(in) :: level
+    real(8), intent(in) :: z(:,:), h(:,:)
+    real(8), intent(inout) :: XForce(:,:)
+    real(8) :: alpha(3), psi(3)
+    integer :: i, k
+
+    real(8) :: ldx
+    integer :: lNx
+
+    call calc_level(level,ldx,lNx)
+    call box_muller(alpha)
+    call box_muller(psi)
+
+    k = 1
+    do i = 1, lNx
+      ! XForce(i,level) = (mu*alpha(k)/sqrt(k*dt)*cos(2*pi*(k*i/lNx+psi(k)))) / (z(i,level)+h(i,level))
+      ! XForce(i,level) = (mu/sqrt(k*dt)*cos(20*2*pi*(k*i/lNx))) / (z(i,level)+h(i,level))
+      XForce(i,level) = 1.d-5
+    enddo
+
+  end subroutine calc_XForce
+
+  subroutine box_muller(z)
+    implicit none
+    double precision, intent(out) :: z(3)
+    double precision :: u1, u2, s
+
+    do
+        call random_number(u1)
+        call random_number(u2)
+        u1 = 2.0d0*u1 - 1.0d0
+        u2 = 2.0d0*u2 - 1.0d0
+        s = u1*u1 + u2*u2
+        if (s <= 1.0d0 .and. s > 0.0d0) exit
+    end do
+
+    s = sqrt(-2.0d0*log(s)/s)
+    z(1) = u1*s
+    z(2) = u2*s
+
+    ! Generate another normal random number for z(3)
+    do
+      call random_number(u1)
+      call random_number(u2)
+      u1 = 2.0d0*u1 - 1.0d0
+      u2 = 2.0d0*u2 - 1.0d0
+      s = u1*u1 + u2*u2
+      if (s <= 1.0d0 .and. s > 0.0d0) exit
+    end do
+
+    s = sqrt(-2.0d0*log(s)/s)
+    z(3) = u1*s
+  end subroutine box_muller
 
 
   ! calculate Fu(i+1/2) actuarlly(u(i))

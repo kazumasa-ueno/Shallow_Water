@@ -18,7 +18,7 @@ program main
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
   
   real(8) :: h(Nx,num_levels)  !基準面からの水深
-  real(8) :: u(Nx,num_levels), z(Nx,num_levels), u_b(Nx,num_levels) !u_bは移流計算実行用の一時格納配列
+  real(8) :: u(Nx,num_levels), z(Nx,num_levels), XForce(Nx,num_levels)
   real(8) :: Au(Nx,num_levels), Az(Nx,num_levels), b(Nx,num_levels) !係数
   real(8) :: residual(Nx,num_levels)
   real(8) :: Res, difference  !Resは残差のl2ノルム、differenceは前の時間との残差  
@@ -37,7 +37,7 @@ program main
   
 
   !u,z,hの初期化
-  call initialize(u,z,h)
+  call initialize(u,z,h,XForce)
   call init_coef(Au,Az,b,residual)
   
   !メインのループ
@@ -46,7 +46,7 @@ program main
     ! call system_clock(time_begin_c, CountPerSec, CountMax)
     
     !係数計算
-    call calc_coef(u,z,h,Au,Az,b)
+    call calc_coef(u,z,h,Au,Az,b,XForce)
     
     difference = 100 !大きな値にセット
     Res = 100 !同上
@@ -74,9 +74,8 @@ program main
     end do
     
     write(*,*) 'times = ', times, sum(z(:,num_levels)), Res
-    u_b(:,:) = u(:,:)
     do l = 1, num_levels
-      call calc_u(l,u,z)
+      call calc_u(l,u,z,XForce)
     enddo
     
     !時間計測終わり
