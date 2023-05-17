@@ -20,4 +20,5 @@ module constant
   real(8), parameter :: dx=X/Nx  !格子間隔
 
   real(8), parameter :: XForce_const = 1.d-5
+  ! real(8), parameter :: XForce_const = 0.d0
 end module constant

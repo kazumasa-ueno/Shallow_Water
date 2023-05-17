@@ -28,8 +28,13 @@ contains
       ! enddo
       call calc_XForce(l,z,h,XForce)
     enddo
-    ! do i = Nx/512, Nx/512*2
-    !   h(i,num_levels) = 1.d4 - 10.d0
+    do i = Nx/256+Nx/2, Nx/256*2+Nx/2
+      h(i,num_levels) = 1.d4 + 1000.d0
+      ! z(i,num_levels) = 0.01
+    end do
+    ! do i = Nx/256+Nx/2+4, Nx/256*2+Nx/2+4
+    !   ! h(i,num_levels) = 1.d4 + 1000.d0
+    !   z(i,num_levels) = -0.01
     ! end do
     ! call calc_XForce(2,z,h,XForce)
     

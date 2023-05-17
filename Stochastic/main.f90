@@ -17,10 +17,8 @@ program main
 
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
   
-  real(8) :: h(Nx,num_levels)  !基準面からの水深
-  real(8) :: u(Nx,num_levels), z(Nx,num_levels), XForce(Nx,num_levels)
-  real(8) :: Au(Nx,num_levels), Az(Nx,num_levels), b(Nx,num_levels) !係数
-  real(8) :: residual(Nx,num_levels)
+  real(8), dimension(Nx,num_levels) :: u, z, h, XForce
+  real(8), dimension(Nx,num_levels) :: Au, Az, b,residual !係数
   real(8) :: Res, difference  !Resは残差のl2ノルム、differenceは前の時間との残差  
   integer :: times, cyc !時間ループ用と収束までの繰り返し用
   integer :: ios !ファイル開く用
@@ -29,12 +27,6 @@ program main
   real(8) :: Prev(Nx), tmp(Nx) !前の値を格納しておくための配列
 
   integer :: i, l
-
-  ! open(unit=10, file="./output/u.txt", iostat=ios, status="replace", action="write")
-  ! if ( ios /= 0 ) stop "Error opening file ./output/u.txt"
-  open(unit=12, file="./output/z.txt", iostat=ios, status="replace", action="write")
-  if ( ios /= 0 ) stop "Error opening file ./output/z.txt"
-  
 
   !u,z,hの初期化
   call initialize(u,z,h,XForce)
@@ -88,9 +80,21 @@ program main
     
     !格子中心での値を記録
     if(mod(times,100)==0) then
-      write(12,*) z(:,num_levels)
+      open(unit=10, file='./output/output'//trim(adjustl(itoa(times)))//'.dat', status='unknown')
+      do l = 1, num_levels
+        write(10,*)  z(:,l)
+      enddo
+      close(10)
     endif
   end do
   
   stop
+contains
+  function itoa(i)
+    implicit none
+    integer, intent(in) :: i
+    character(len=32) :: itoa
+    write(itoa, '(i0)') i
+    itoa = adjustl(itoa)
+  end function itoa
 end program main

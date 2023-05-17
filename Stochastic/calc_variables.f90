@@ -149,11 +149,13 @@ contains
     call box_muller(alpha)
     call box_muller(psi)
 
-    k = 1
     do i = 1, lNx
-      ! XForce(i,level) = (mu*alpha(k)/sqrt(k*dt)*cos(2*pi*(k*i/lNx+psi(k)))) / (z(i,level)+h(i,level))
-      XForce(i,level) = (mu/sqrt(k*dt)*cos(20*2*pi*(k*i/lNx))) / (z(i,level)+h(i,level))
-      ! XForce(i,level) = XForce_const
+      XForce(i,level) = 0.d0
+      do k = 1, 3
+        ! XForce(i,level) = XForce(i,level) + (mu*alpha(k)/sqrt(k*dt)*cos(2*pi*(k*i/lNx+psi(k)))) / (z(i,level)+h(i,level))
+        ! XForce(i,level) = XForce(i,level) + (mu/sqrt(k*dt)*cos(2*pi*(k*i/lNx))) / (z(i,level)+h(i,level))
+      enddo
+      XForce(i,level) = XForce_const
     enddo
 
   end subroutine calc_XForce
