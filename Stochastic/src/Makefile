@@ -6,7 +6,7 @@ FFLAGS := -O3
 DEBUG_FLAGS := -g
 
 #source(s)
-SRC := constant.f90 boundary.f90 transfer.f90 calc_variables.f90 initialize.f90 solver.f90 main.f90
+SRC := constant.f90 struct.f90 boundary.f90 transfer.f90 calc_variables.f90 initialize.f90 solver.f90 out.f90 main.f90
 
 #object(s)
 OBJ := $(patsubst %.f90, %.o, $(notdir $(SRC)))

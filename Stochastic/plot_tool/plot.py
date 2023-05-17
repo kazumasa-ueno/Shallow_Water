@@ -1,12 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt 
 from matplotlib.animation import FuncAnimation
+import glob
 
-Nt = 150
-Nx = 512
+files = sorted(glob.glob('./output/fmgz*.dat'))
 
-z = np.loadtxt("./output/z.txt")
-z.reshape(Nt,Nx)
+data = np.loadtxt(files[0])
+Nt = len(files)
+Nx = len(data[0])
+levels = len(data)
+print(Nt,Nx,levels)
+
+z = np.zeros((Nt, Nx, levels))
+for i, file in enumerate(files):
+	data = np.loadtxt(file)
+	for level in range(levels):
+		z[i,:,level] = data[level]
+
+z = z[:,:,-1]
 x = np.linspace(0,4e6,Nx)
 
 fig,ax = plt.subplots()

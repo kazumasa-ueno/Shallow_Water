@@ -3,17 +3,17 @@
 !********************************************
 
 module transfer_mod
+  use structure
   use boundary_mod
   implicit none
   
 contains
 
   ! level -> level-1
-  subroutine Prolongation(level,u,z,h)
+  subroutine Prolongation(level)
     implicit none
 
     integer, intent(in) :: level 
-    real(8), intent(inout) :: u(:,:), z(:,:), h(:,:)
 
     integer :: ic, iff
 
@@ -32,11 +32,10 @@ contains
   end subroutine Prolongation
 
   ! level -> level-1
-  subroutine Prolongation_defect(level,residual)
+  subroutine Prolongation_defect(level)
     implicit none
 
     integer :: level
-    real(8), intent(inout) :: residual(:,:)
 
     integer :: ic, iff
     real(8) :: ldx !細かい方の格子幅
@@ -52,11 +51,35 @@ contains
   end subroutine Prolongation_defect
 
   ! level -> level+1
-  subroutine Interpolation_defect(level,residual)
+  subroutine Interpolation(level)
     implicit none
 
     integer, intent(in) :: level !fine grid number
-    real(8), intent(inout)  :: residual(:,:)
+
+    integer :: ic, iff
+    real(8) :: dc1, dc2, dc3
+
+    real(8) :: ldx
+    integer :: lNx
+
+    call calc_level(level,ldx,lNx)
+
+    do iff = 2, lNx*2, 2
+      ic = iff/2
+      dc1 = z(cir(ic  ,lNx),level)
+      dc2 = z(cir(ic-1,lNx),level)
+      dc3 = z(cir(ic+1,lNx),level)
+      z(iff,level+1) = (3*dc1+dc3)*0.25
+      z(iff-1,level+1) = (3*dc1+dc2)*0.25
+    end do
+    
+  end subroutine Interpolation
+
+  ! level -> level+1
+  subroutine Interpolation_defect(level)
+    implicit none
+
+    integer, intent(in) :: level !fine grid number
 
     integer :: ic, iff
     real(8) :: dc1, dc2, dc3

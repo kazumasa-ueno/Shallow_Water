@@ -12,6 +12,7 @@
 
 module calc_variables_mod
   use constant
+  use structure
   use boundary_mod
   use transfer_mod
   implicit none
@@ -19,15 +20,17 @@ module calc_variables_mod
   interface z_frac
     module procedure z_frac_2, z_frac_list
   end interface z_frac
+
+  interface calc_coef
+    module procedure calc_coef_all, calc_coef_level
+  end interface calc_coef
   
 contains
 
-  subroutine calc_u(level,u,z,XForce)
+  subroutine calc_u(level)
     implicit none
     
     integer, intent(in) :: level
-    real(8), intent(in) :: z(:,:), XForce(:,:)
-    real(8), intent(inout) :: u(:,:)
 
     integer :: i
     real(8) :: Fu 
@@ -39,7 +42,7 @@ contains
     allocate(u_b(lNx))
     
     do i = 1, lNx
-      Fu = calc_Fuu(level,i,u)
+      Fu = calc_Fuu(level,i)
       u_b(i) = (Fu - g*(dt/ldx)*(z(cir(i+1,lNx),level)-z(cir(i,lNx),level)) &
       & + dt*XForce(i,level))
       ! & + nu*dt/(ldx**2)*(u(cir(i+1,lNx),level)-2*u(cir(i,lNx),level)+u(cir(i-1,lNx),level)) + dt*XForce(i,level))
@@ -52,12 +55,10 @@ contains
     
   end subroutine calc_u
   
-  subroutine calc_Au(level,z,h,Au)
+  subroutine calc_Au(level)
     implicit none
     
     integer, intent(in) :: level
-    real(8), intent(in) :: z(:,:), h(:,:)
-    real(8), intent(inout) :: Au(:,:)
     
     real(8) :: ldx
     integer :: lNx
@@ -71,12 +72,10 @@ contains
 
   end subroutine calc_Au
 
-  subroutine calc_Az(level,Au,Az)
+  subroutine calc_Az(level)
     implicit none
     
     integer, intent(in) :: level
-    real(8), intent(in) :: Au(:,:)
-    real(8), intent(inout) :: Az(:,:)
 
     real(8) :: ldx
     integer :: lNx
@@ -90,12 +89,10 @@ contains
     
   end subroutine calc_Az
   
-  subroutine calc_b(level,u,z,h,b,XForce)
+  subroutine calc_b(level)
     implicit none
     
     integer, intent(in) :: level
-    real(8), intent(in) :: u(:,:), z(:,:), h(:,:), XForce(:,:)
-    real(8), intent(inout) :: b(:,:)
     
     integer :: i
     real(8) :: Fu(2)
@@ -104,8 +101,8 @@ contains
     
     call calc_level(level,ldx,lNx)
     do i = 1, lNx
-      Fu(1) = calc_Fuu(level,i,u)
-      Fu(2) = calc_Fuu(level,i-1,u)
+      Fu(1) = calc_Fuu(level,i)
+      Fu(2) = calc_Fuu(level,i-1)
       b(i,level) = z(cir(i,lNx),level) - (dt/ldx) * ( &
       & (z_frac(z(cir(i,lNx),level),z(cir(i+1,lNx),level))+z_frac(h(cir(i,lNx),level),h(cir(i+1,lNx),level))) &
       & * (Fu(1)+dt*XForce(i,level)) &
@@ -118,27 +115,33 @@ contains
 
   end subroutine calc_b
 
-  subroutine calc_coef(u,z,h,Au,Az,b,XForce)
+  subroutine calc_coef_all()
     implicit none
 
-    real(8), intent(in) :: u(:,:), z(:,:), h(:,:), XForce(:,:)
-    real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:)
-    integer :: l, i
+    integer :: l
 
     do l = num_levels, 1, -1
-      call calc_Au(l,z,h,Au)
-      call calc_Az(l,Au,Az)
-      call calc_b(l,u,z,h,b,XForce)
+      call calc_Au(l)
+      call calc_Az(l)
+      call calc_b(l)
       ! call Prolongation(l,u,z,h)
     enddo
-  end subroutine calc_coef
+  end subroutine calc_coef_all
 
-  subroutine calc_XForce(level,z,h,XForce)
+  subroutine calc_coef_level(l)
+    implicit none
+
+    integer, intent(in) :: l
+
+    call calc_Au(l)
+    call calc_Az(l)
+    call calc_b(l)
+  end subroutine calc_coef_level
+
+  subroutine calc_XForce(level)
     implicit none
 
     integer, intent(in) :: level
-    real(8), intent(in) :: z(:,:), h(:,:)
-    real(8), intent(inout) :: XForce(:,:)
     real(8) :: alpha(3), psi(3)
     integer :: i, k
 
@@ -195,11 +198,10 @@ contains
 
   ! calculate Fu(i+1/2) actuarlly(u(i))
   ! 0 <= i <= Nx
-  real(8) function calc_Fuu(level,i,u)
+  real(8) function calc_Fuu(level,i)
     implicit none
     
     integer, intent(in) :: level, i
-    real(8), intent(in) :: u(:,:)
 
     integer :: s, smax
     real(8) :: x, u_s

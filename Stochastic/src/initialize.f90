@@ -1,15 +1,15 @@
 module initialization
   use constant
+  use structure
   use boundary_mod
   use transfer_mod
   use calc_variables_mod
   implicit none
   
 contains
-  subroutine initialize(u,z,h,XForce)
+  subroutine initialize()
     implicit none
 
-    real(8), intent(inout) :: u(:,:), z(:,:), h(:,:), XForce(:,:)
     integer :: i, l
 
     real(8) :: ldx
@@ -26,7 +26,7 @@ contains
       ! do i = 1, lNx
       !   h(i,l) = 1.d4 + 10.d0*sin(2*pi*i/lNx) + 10.d0*sin(2.d0*2*pi*i/lNx) + 10.d0*sin(3.d0*2*pi*i/lNx)
       ! enddo
-      call calc_XForce(l,z,h,XForce)
+      call calc_XForce(l)
     enddo
     do i = Nx/256+Nx/2, Nx/256*2+Nx/2
       h(i,num_levels) = 1.d4 + 1000.d0
@@ -36,14 +36,13 @@ contains
     !   ! h(i,num_levels) = 1.d4 + 1000.d0
     !   z(i,num_levels) = -0.01
     ! end do
-    ! call calc_XForce(2,z,h,XForce)
+    ! call calc_XForce(2)
     
   end subroutine initialize
 
-  subroutine init_coef(Au,Az,b,residual)
+  subroutine init_coef()
     implicit none
     
-    real(8), intent(inout) :: Au(:,:), Az(:,:), b(:,:), residual(:,:)
     integer :: i, l
 
     do l = 1, num_levels
@@ -52,6 +51,7 @@ contains
         Az(i,l) = 0.d0
         b(i,l) = 0.d0
         residual(i,l) = 0.d0
+        rhs(i,l) = 0.d0
       enddo
     enddo
 

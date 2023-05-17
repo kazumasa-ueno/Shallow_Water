@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-files = sorted(glob.glob('./output/output*.dat'))
+files = sorted(glob.glob('./output/fmgz*.dat'))
 
 data = np.loadtxt(files[0])
 Nt = len(files)
@@ -37,9 +37,11 @@ xf = np.abs(k[:Nx//2])  # xfが正の値のみを含むようにする
 
 # スペクトルをプロット
 plt.loglog(k[:Nx//2], energy_spectrum[:Nx//2], 'k-+')
-# plt.gca().xaxis.set_major_formatter(plt.ScalarFormatter())
-# plt.gca().xaxis.set_minor_formatter(plt.ScalarFormatter())
-# plt.ticklabel_format(axis='x', style='plain')
+
+x = np.logspace(0.5,1.5, 10)
+y = x**-2
+plt.loglog(x, y)
+
 plt.xlabel('Wavenumber (k)')
 plt.ylabel('Potential Energy Spectrum')
 # plt.xlim(1,256)
@@ -47,7 +49,8 @@ plt.ylabel('Potential Energy Spectrum')
 # 目盛りを2の累乗に設定
 x_ticks = [2**i for i in range(int(np.log2(xf[1])), int(np.log2(xf[-1]))+1) if 2**i >= xf[1] and 2**i <= xf[-1]]
 plt.xticks(x_ticks, x_ticks)
+plt.xlim(1,256)
 print(energy_spectrum)
 
 plt.tight_layout()
-plt.savefig("spect.png")
+plt.savefig("../figure/spect.png")

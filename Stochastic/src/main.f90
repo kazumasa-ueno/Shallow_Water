@@ -6,19 +6,19 @@
 
 program main
   use constant
+  use structure
   use boundary_mod
   use calc_variables_mod
   use transfer_mod
   use initialization
   use solve
+  use output
   use,intrinsic :: iso_fortran_env
   use, intrinsic :: ieee_arithmetic
   implicit none
 
   integer(int32) :: time_begin_c,time_end_c, CountPerSec, CountMax !時間測定用
-  
-  real(8), dimension(Nx,num_levels) :: u, z, h, XForce
-  real(8), dimension(Nx,num_levels) :: Au, Az, b,residual !係数
+
   real(8) :: Res, difference  !Resは残差のl2ノルム、differenceは前の時間との残差  
   integer :: times, cyc !時間ループ用と収束までの繰り返し用
   integer :: ios !ファイル開く用
@@ -29,8 +29,8 @@ program main
   integer :: i, l
 
   !u,z,hの初期化
-  call initialize(u,z,h,XForce)
-  call init_coef(Au,Az,b,residual)
+  call initialize
+  call init_coef
   
   !メインのループ
   do times = 0, ntmax-1
@@ -38,7 +38,7 @@ program main
     ! call system_clock(time_begin_c, CountPerSec, CountMax)
     
     !係数計算
-    call calc_coef(u,z,h,Au,Az,b,XForce)
+    call calc_coef
     
     difference = 100 !大きな値にセット
     Res = 100 !同上
@@ -47,13 +47,13 @@ program main
     !収束するまで繰り返し
     ! do while(Res>1.e-19)
     !   cyc = cyc + 1
-    do cyc = 1, 50
+    do cyc = 1, 2
       Prev(:) = z(:,num_levels)
       
       !zの計算
-      ! call MGCYC(num_levels,u,z,h,Au,Az,b,residual,cyc,times)
-      ! call FMG(num_levels, 2, u, z, h, Au, Az, b, residual, cyc, times)
-      call smooth(num_levels,z,Au,Az,b)
+      ! call MGCYC(num_levels)
+      call FMG(num_levels, 3)
+      ! call smooth(num_levels)
       
       tmp(:) = reshape(Prev(:) - z(:,1),(/(Nx)/))
       difference = dot_product(tmp,tmp)      
@@ -67,10 +67,10 @@ program main
     
     write(*,*) 'times = ', times, sum(z(:,num_levels)), Res
     do l = 1, num_levels
-      call calc_u(l,u,z,XForce)
+      call calc_u(l)
     enddo
     do l = 1, num_levels
-      call calc_XForce(l,z,h,XForce)
+      call calc_XForce(l)
     enddo
     
     !時間計測終わり
@@ -80,21 +80,9 @@ program main
     
     !格子中心での値を記録
     if(mod(times,100)==0) then
-      open(unit=10, file='./output/output'//trim(adjustl(itoa(times)))//'.dat', status='unknown')
-      do l = 1, num_levels
-        write(10,*)  z(:,l)
-      enddo
-      close(10)
+      call outucd(times)
     endif
   end do
   
   stop
-contains
-  function itoa(i)
-    implicit none
-    integer, intent(in) :: i
-    character(len=32) :: itoa
-    write(itoa, '(i0)') i
-    itoa = adjustl(itoa)
-  end function itoa
 end program main
