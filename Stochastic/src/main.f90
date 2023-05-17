@@ -47,7 +47,7 @@ program main
     !収束するまで繰り返し
     ! do while(Res>1.e-19)
     !   cyc = cyc + 1
-    do cyc = 1, 2
+    do cyc = 1, 10
       Prev(:) = z(:,num_levels)
       
       !zの計算

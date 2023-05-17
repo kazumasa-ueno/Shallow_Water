@@ -14,7 +14,7 @@ module constant
   real(8), parameter :: dtau = dt/10.d0      !移流計算用小時間間隔
 
   ! stochastic force用定数
-  real(8), parameter :: mu = 1.d9/(86400**1.5)
+  real(8), parameter :: mu = 1.d11/(86400**1.5)
 
   ! real(8), parameter :: f=f0   !コリオリパラメータ
   real(8), parameter :: dx=X/Nx  !格子間隔
