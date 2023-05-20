@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import glob
 
-files = sorted(glob.glob('../out_stoc_n3/fmgz*.dat'))
+files = sorted(glob.glob('../output/z*.dat'))
 
 data = np.loadtxt(files[0])
 Nt = len(files)
@@ -17,20 +17,28 @@ for i, file in enumerate(files):
 	for level in range(levels):
 		z[i,:,level] = data[level]
 
-i = 5
-z = z[:,:Nx//2**(levels-i-1),i]
-N = len(z[0])
-x = np.linspace(0,1e7,N)
+# i = 5
 
 fig,ax = plt.subplots()
-line, = ax.plot(x,z[0])
-title = ax.set_title("num = {}".format(0))
+# line, = ax.plot(x,z[0])
+for i in range(levels):
+    eta = z[:,:Nx//2**(levels-i-1),i]
+    N = len(eta[0])
+    x = np.linspace(0,10000,N)
+    ax.plot(x, eta[0], label="N = {}".format(Nx//2**(levels-i-1)))
+title = ax.set_title("num = {}".format(0),fontsize=14)
 ax.set_ylim(-5,5)
+ax.set_xlabel("x [km]")
+ax.set_ylabel("$\eta$ [m]")
+ax.legend()
+
+waves = ax.get_lines()
 
 def update(frame):
-    line.set_ydata(z[frame])
-    title.set_text("day = {:2f}".format(frame*0.01))
-    return line,
+    for i, wave in enumerate(waves):
+        wave.set_ydata(z[frame,:Nx//2**(levels-i-1),i])
+    title.set_text("day = {:.2f}".format(frame*0.01))
+    return waves
 
 ani = FuncAnimation(fig, update, frames=range(Nt), interval=1, blit=True)
 

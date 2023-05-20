@@ -77,6 +77,10 @@ program main
     ! call system_clock(time_end_c)
     ! print *,time_begin_c,time_end_c, CountPerSec,CountMax
     ! write(*,*) 'nt = ', times, real(time_end_c - time_begin_c)/CountPerSec,"sec"
+
+    do l = 3, num_levels
+      z(:,l) = fmgz(:,l)
+    enddo
     
     !格子中心での値を記録
     if(mod(times,100)==0) then
